@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -601,19 +602,21 @@ public class RemoveOverlapView extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void iniciarJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_iniciarJButtonActionPerformed
-        ArrayList<OverlapRect> reprojected = null;
+        Map<OverlapRect, OverlapRect> reprojected = null;
+        ArrayList<OverlapRect> projectedValues = null;
         ArrayList<OverlapRect> rects = formRectangles();
         if( rWordleCJRadioButton.isSelected() ) {
             
             double[] center0 = Util.getCenter(rects);
             RWordleC rwordlec = new RWordleC();
             reprojected = rwordlec.applyAndShowTime(rects);
-            double[] center1 = Util.getCenter(reprojected);
+            projectedValues = Util.getProjectedValues(reprojected);
+            double[] center1 = Util.getCenter(projectedValues);
             
             double ammountX = center0[0]-center1[0];
             double ammountY = center0[1]-center1[1];
-            Util.translate(reprojected, ammountX, ammountY);
-            Util.normalize(reprojected);
+            Util.translate(projectedValues, ammountX, ammountY);
+            Util.normalize(projectedValues);
             
         } else if( rWordleLJRadioButton.isSelected() ) {
             double alpha;
@@ -627,28 +630,27 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             double[] center0 = Util.getCenter(rects);
             RWordleL rwordlel = new RWordleL(alpha, recentralizarJRadioButton.isSelected());
             reprojected = rwordlel.applyAndShowTime(rects);
-            double[] center1 = Util.getCenter(reprojected);
+            projectedValues = Util.getProjectedValues(reprojected);
+            double[] center1 = Util.getCenter(projectedValues);
 
             double ammountX = center0[0]-center1[0];
             double ammountY = center0[1]-center1[1];
-            Util.translate(reprojected, ammountX, ammountY);
-            Util.normalize(reprojected);
+            Util.translate(projectedValues, ammountX, ammountY);
+            Util.normalize(projectedValues);
             
         } else if( vpscJRadioButton.isSelected() ) {
             
             double[] center0 = Util.getCenter(rects);
             VPSC vpsc = new VPSC();
             reprojected = vpsc.applyAndShowTime(rects);
-            double[] center1 = Util.getCenter(reprojected);
+            projectedValues = Util.getProjectedValues(reprojected);
+            double[] center1 = Util.getCenter(projectedValues);
 
-            int i = 0;
-            for( OverlapRect r: reprojected ) 
-                r.setId(i++);       
 
             double ammountX = center0[0]-center1[0];
             double ammountY = center0[1]-center1[1];
-            Util.translate(reprojected, ammountX, ammountY);
-            Util.normalize(reprojected);
+            Util.translate(projectedValues, ammountX, ammountY);
+            Util.normalize(projectedValues);
             
 //            ArrayList<Retangulo> rects = formRectangles();
 //            double[] center0 = Util.getCenter(rects);
@@ -726,25 +728,18 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             int algo = matrizEsparsaJCheckBox.isSelected() ? 1 : 0;
             PRISM prism = new PRISM(algo);
             reprojected = prism.applyAndShowTime(rects);
-            double[] center1 = Util.getCenter(reprojected);
-
-            int i = 0;
-            for( OverlapRect r: reprojected ) {
-                rects.get(i).setId(i);
-                r.setId(i++);        
-            }
-
+            projectedValues = Util.getProjectedValues(reprojected);
+            double[] center1 = Util.getCenter(projectedValues);
+            
+            
             double ammountX = center0[0]-center1[0];
             double ammountY = center0[1]-center1[1];
-            Util.translate(reprojected, ammountX, ammountY);
-            Util.normalize(reprojected);
+            Util.translate(projectedValues, ammountX, ammountY);
+            Util.normalize(projectedValues);
             
             
         } else if( projSnippetJRadioButton.isSelected() ) {
             
-            int i = 0;
-            for( OverlapRect r: rects )
-                r.setId(i++);
             double[] center0 = Util.getCenter(rects);
 
             String alpha_value = JOptionPane.showInputDialog("Por favor, insira o valor para 'alpha':");
@@ -753,16 +748,13 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             ProjSnippet projsnippet = new ProjSnippet(Double.parseDouble(alpha_value), Integer.parseInt(k_value)+1);
             reprojected = projsnippet.apply(rects);
             if( reprojected != null ) {
-
-                double[] center1 = Util.getCenter(reprojected);
-                i = 0;
-                for( OverlapRect r: reprojected )
-                    r.setId(i++);        
+                projectedValues = Util.getProjectedValues(reprojected);
+                double[] center1 = Util.getCenter(projectedValues);
 
                 double ammountX = center0[0]-center1[0];
                 double ammountY = center0[1]-center1[1];
-                Util.translate(reprojected, ammountX, ammountY);
-                Util.normalize(reprojected);
+                Util.translate(projectedValues, ammountX, ammountY);
+                Util.normalize(projectedValues);
                 
             } else
                 JOptionPane.showMessageDialog(this, "Houve um problema ao aplicar o método Projsnippet.");
@@ -813,14 +805,14 @@ public class RemoveOverlapView extends javax.swing.JFrame {
                 
                 int ymin = Math.abs(executor.getMinRow());
                 int xmin = Math.abs(executor.getMinCol());
-                reprojected = new ArrayList<>();
+                projectedValues = new ArrayList<>();
                 int w = (int) rects.get(0).getWidth();
                 int h = (int) rects.get(0).getHeight();
                 int offset = 50;
                 for( PointItem d: executor.getItems() ) {
                     OverlapRect r = new OverlapRect(w*(d.getCol()+xmin) + offset, h*(d.getRow()+ymin) + offset, w, h);
                     r.setId(d.getId());
-                    reprojected.add(r);
+                    projectedValues.add(r);
                 }
                 
             } catch( IOException e ) {
@@ -898,7 +890,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
                 
                 int offset = 100;
                 
-                reprojected = new ArrayList<>();
+                projectedValues = new ArrayList<>();
                 ((ProjectionViewer)gv).setBoard(true);
                         
                 for( PointItem d: executor.getItems() ) {
@@ -910,7 +902,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
 
                     OverlapRect r = new OverlapRect(distancia - (w/2) + offset, centerHexY - (w/2) + offset, w, w);
                     r.setId(d.getId());
-                    reprojected.add(r);
+                    projectedValues.add(r);
                     
                     int x = distancia+offset;
                     int y = centerHexY+offset;
@@ -930,7 +922,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             }
         }
         
-        if( reprojected != null ) {        
+        if( projectedValues != null ) {        
             
             if( reduceSpaceCheckBox.isSelected() && 
                 (prismJRadioButton.isSelected() || projSnippetJRadioButton.isSelected() || vpscJRadioButton.isSelected() ) ) {
@@ -953,9 +945,9 @@ public class RemoveOverlapView extends javax.swing.JFrame {
                 
                 ArrayList<ChangeRetangulo> cRetangulo = new ArrayList<>();
                 for( int j = 0; j < rects.size(); ++j ) {
-                    cRetangulo.add(new ChangeRetangulo(rects.get(j), reprojected.get(j)));
-                    cRetangulo.get(j).third = new OverlapRect(0, 0, reprojected.get(j).getWidth(), 
-                                                                  reprojected.get(j).getWidth(), 
+                    cRetangulo.add(new ChangeRetangulo(rects.get(j), projectedValues.get(j)));
+                    cRetangulo.get(j).third = new OverlapRect(0, 0, projectedValues.get(j).getWidth(), 
+                                                                  projectedValues.get(j).getWidth(), 
                                                                   rects.get(j).getId());            
                 }        
                 OverlapRect[] rss = findPosition(cRetangulo, pair);
@@ -963,8 +955,8 @@ public class RemoveOverlapView extends javax.swing.JFrame {
 
 
                 for( int j = 0; j < rss.length; ++j ) {
-                    reprojected.get(j).setUX(rss[j].getUX());
-                    reprojected.get(j).setUY(rss[j].getUY());
+                    projectedValues.get(j).setUX(rss[j].getUX());
+                    projectedValues.get(j).setUY(rss[j].getUY());
                 }
                 
             }
@@ -973,8 +965,8 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             
             ArrayList<Vertex> vertices = graph.getVertex();
             for( int i = 0; i < vertices.size(); ++i ) {
-                vertices.get(reprojected.get(i).getId()).setX((float) reprojected.get(i).getCenterX());
-                vertices.get(reprojected.get(i).getId()).setY((float) reprojected.get(i).getCenterY());
+                vertices.get(projectedValues.get(i).getId()).setX((float) projectedValues.get(i).getCenterX());
+                vertices.get(projectedValues.get(i).getId()).setY((float) projectedValues.get(i).getCenterY());
             }
             gv.updateImage();
         }

@@ -2554,7 +2554,6 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
             if( graph != null ) {       
                 initialProjection = new ArrayList<>();
                 transformProjection(initialProjection);
-                System.out.println("SIZE: "+initialProjection.size());
                 RemoveOverlapView removeOverlap = new RemoveOverlapView();
                 removeOverlap.setViewer(gv);
                 removeOverlap.setVisible(true);
