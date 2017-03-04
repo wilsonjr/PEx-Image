@@ -923,46 +923,6 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         }
         
         if( projectedValues != null ) {        
-            
-            if( reduceSpaceCheckBox.isSelected() && 
-                (prismJRadioButton.isSelected() || projSnippetJRadioButton.isSelected() || vpscJRadioButton.isSelected() ) ) {
-                
-                KNN knn = new KNN(Integer.parseInt(jTextField1.getText()));
-                
-                Pair[][] pair = null;
-                try {
-                    
-                    Matrix matrix = MatrixFactory.getInstance("C:\\Users\\wilson\\Desktop\\Faculdade\\FAPESP\\dados\\Iris.data");
-
-                    DissimilarityType mtype = DissimilarityType.EUCLIDEAN;
-                    Dissimilarity diss = DissimilarityFactory.getInstance(mtype);
-
-                    DistanceMatrix dmat = new DistanceMatrix(matrix, diss);
-                    pair = knn.execute(rects);
-                } catch( IOException e ) {
-                    System.out.println(e);
-                }
-                
-                ArrayList<ChangeRetangulo> cRetangulo = new ArrayList<>();
-                for( int j = 0; j < rects.size(); ++j ) {
-                    cRetangulo.add(new ChangeRetangulo(rects.get(j), projectedValues.get(j)));
-                    cRetangulo.get(j).third = new OverlapRect(0, 0, projectedValues.get(j).getWidth(), 
-                                                                  projectedValues.get(j).getWidth(), 
-                                                                  rects.get(j).getId());            
-                }        
-                OverlapRect[] rss = findPosition(cRetangulo, pair);
-                System.out.println("ok");
-
-
-                for( int j = 0; j < rss.length; ++j ) {
-                    projectedValues.get(j).setUX(rss[j].getUX());
-                    projectedValues.get(j).setUY(rss[j].getUY());
-                }
-                
-            }
-            
-            
-            
             ArrayList<Vertex> vertices = graph.getVertex();
             for( int i = 0; i < vertices.size(); ++i ) {
                 vertices.get(projectedValues.get(i).getId()).setX((float) projectedValues.get(i).getCenterX());
