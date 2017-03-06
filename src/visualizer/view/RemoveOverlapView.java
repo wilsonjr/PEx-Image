@@ -446,13 +446,13 @@ public class RemoveOverlapView extends javax.swing.JFrame {
                     w += 3;
                     h += 3;
                 }
-                retangulos.add(new OverlapRect(x, y, w, h));
+                retangulos.add(new OverlapRect(x, y, 20, 20));
             } else {
                 
                 int x = ((int) vertices.get(i).getX()) - vertices.get(i).getRay();
                 int y = ((int) vertices.get(i).getY()) - vertices.get(i).getRay();
                 int raio = vertices.get(i).getRay()*2;
-                retangulos.add(new OverlapRect(x, y, raio, raio));
+                retangulos.add(new OverlapRect(x, y, 20, 20));
             }
             
         }
@@ -651,76 +651,6 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             double ammountY = center0[1]-center1[1];
             Util.translate(projectedValues, ammountX, ammountY);
             Util.normalize(projectedValues);
-            
-//            ArrayList<Retangulo> rects = formRectangles();
-//            double[] center0 = Util.getCenter(rects);
-//            try {
-//                File file = new File("vpsc_points.in");        
-//                if( !file.exists() )
-//                    file.createNewFile();
-//
-//                /**
-//                 *  salva as coordenadas e as dimensões dos retângulos
-//                 */
-//                FileWriter fw = new FileWriter(file.getAbsoluteFile());
-//                try( BufferedWriter bw = new BufferedWriter(fw) ) {
-//                    bw.write(rects.size()+"\n");
-//                    for( Retangulo r: rects )
-//                        bw.write(r.getUX()+" "+r.getLY()+" "+r.getWidth()+" "+r.getHeight()+"\n");
-//                }            
-//                
-//                try {
-//                    final Process p = Runtime.getRuntime().exec("cmd /c VPSCTest.exe");
-//                    System.out.println("Esperando rotina C++");
-//                    new Runnable() {
-//
-//                        @Override
-//                        public void run() {
-//                            try {  
-//                                resultadoVPSC = p.waitFor();
-//                            } catch (InterruptedException ex) {
-//                                Logger.getLogger(ProjSnippet.class.getName()).log(Level.SEVERE, null, ex);
-//                            }
-//                        }
-//                    }.run();
-//
-//                } catch (IOException ex) {
-//                    Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//
-//                System.out.println("Recuperando resultados...");
-//                if( resultadoVPSC == 0 ) {
-//
-//
-//                    Scanner scn = new Scanner(new File("vpsc_points.out"));
-//                    double minX, maxX, minY, maxY;
-//                    reprojected = new ArrayList<>();
-//                    int i = 0;
-//                    while( scn.hasNext() ) {
-//                        String[] str = scn.nextLine().split(" ");
-//                        minX = Double.parseDouble(str[0]);
-//                        minY = Double.parseDouble(str[1]);
-//                        maxX = Double.parseDouble(str[2]);
-//                        maxY = Double.parseDouble(str[3]);
-//                        reprojected.add(new Retangulo(minX, minY, maxX-minX, maxY-minY, rects.get(i).getId()));
-//                    }
-//                }
-//            
-//            } catch( Exception e ) {
-//                System.out.println("Ocorreu um erro: "+e);
-//            }
-//            
-//            double[] center1 = Util.getCenter(reprojected);
-//
-//            int i = 0;
-//            for( Retangulo r: reprojected ) 
-//                r.setId(i++);       
-//
-//            double ammountX = center0[0]-center1[0];
-//            double ammountY = center0[1]-center1[1];
-//            Util.translate(reprojected, ammountX, ammountY);
-//            Util.normalize(reprojected);
-            
             
         } else if( prismJRadioButton.isSelected() ) {
             
@@ -925,6 +855,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         if( projectedValues != null ) {        
             ArrayList<Vertex> vertices = graph.getVertex();
             for( int i = 0; i < vertices.size(); ++i ) {
+                System.out.println(projectedValues.get(i).getId()+": "+projectedValues.get(i).x+"; "+projectedValues.get(i).y);
                 vertices.get(projectedValues.get(i).getId()).setX((float) projectedValues.get(i).getCenterX());
                 vertices.get(projectedValues.get(i).getId()).setY((float) projectedValues.get(i).getCenterY());
             }
