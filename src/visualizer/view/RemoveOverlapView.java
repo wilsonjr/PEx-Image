@@ -676,7 +676,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             String k_value = JOptionPane.showInputDialog("Por favor, insira o valor de 'k':");
             
             ProjSnippet projsnippet = new ProjSnippet(Double.parseDouble(alpha_value), Integer.parseInt(k_value)+1);
-            reprojected = projsnippet.apply(rects);
+            reprojected = projsnippet.applyAndShowTime(rects);
             if( reprojected != null ) {
                 projectedValues = Util.getProjectedValues(reprojected);
                 double[] center1 = Util.getCenter(projectedValues);
