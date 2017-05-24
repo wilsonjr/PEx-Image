@@ -95,7 +95,6 @@ public class BKmeans extends Clustering {
             for (int j = 0; j < this.nrclusters - 1; j++) {
                 //Search the cluster with the bigger number of elements
                 gCluster = this.getClusterToSplit(this.clusters);
-
                 //split the greatest cluster into two clusters
                 if (gCluster.size() > 1) {
                     this.splitCluster(matrix, diss, gCluster);
