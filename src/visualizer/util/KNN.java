@@ -148,7 +148,7 @@ public class KNN {
                 if (i == j) {
                     continue;
                 }                
-                float dist = (float) br.com.methods.utils.Util.distanciaEuclideana(rects.get(i).getUX(), rects.get(i).getUY(), 
+                float dist = (float) br.com.methods.utils.Util.euclideanDistance(rects.get(i).getUX(), rects.get(i).getUY(), 
                                                                            rects.get(j).getUX(), rects.get(j).getUY());
 
                 if (dist < neighbors[i][neighbors[i].length - 1].value) {

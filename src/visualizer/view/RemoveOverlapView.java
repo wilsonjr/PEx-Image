@@ -6,6 +6,8 @@
 
 package visualizer.view;
 
+import br.com.explore.explorertree.ExplorerTreeController;
+import br.com.methods.overlap.expadingnode.OverlapTree;
 import br.com.methods.overlap.hexboard.HexBoardExecutor;
 import br.com.methods.overlap.incboard.IncBoardExecutor;
 import br.com.methods.overlap.incboard.PointItem;
@@ -16,10 +18,15 @@ import br.com.methods.overlap.rwordle.RWordleL;
 import br.com.methods.overlap.vpsc.VPSC;
 import br.com.methods.utils.OverlapRect;
 import br.com.methods.utils.Util;
+import br.com.representative.RepresentativeFinder;
+import br.com.representative.clustering.FarPointsMedoidApproach;
+import br.com.representative.clustering.partitioning.KMeans;
 import java.awt.Polygon;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
@@ -34,14 +41,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import visualizer.graph.Graph;
 import visualizer.graph.Vertex;
-import visualizer.matrix.Matrix;
-import visualizer.matrix.MatrixFactory;
-import visualizer.projection.distance.Dissimilarity;
-import visualizer.projection.distance.DissimilarityFactory;
-import visualizer.projection.distance.DissimilarityType;
-import visualizer.projection.distance.DistanceMatrix;
 import visualizer.util.ChangeRetangulo;
-import visualizer.util.KNN;
 import visualizer.util.Pair;
 
 /**
@@ -71,6 +71,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         group.add(projSnippetJRadioButton);
         group.add(incBoardJRadioButton);
         group.add(hexBoardJRadioButton);
+        group.add(overlapTreeJRadioButton);
         
         rWordleCJRadioButton.setSelected(true);
     }
@@ -460,6 +461,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         return retangulos; 
     }
     
+    
         /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -484,6 +486,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         matrizEsparsaJCheckBox = new javax.swing.JCheckBox();
         reduceSpaceCheckBox = new javax.swing.JCheckBox();
         jTextField1 = new javax.swing.JTextField();
+        overlapTreeJRadioButton = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -524,42 +527,46 @@ public class RemoveOverlapView extends javax.swing.JFrame {
 
         reduceSpaceCheckBox.setText("Reduzir Espaços");
 
+        overlapTreeJRadioButton.setText("OverlapTree");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(vpscJRadioButton)
-                    .addComponent(rWordleCJRadioButton)
-                    .addComponent(projSnippetJRadioButton)
-                    .addComponent(incBoardJRadioButton)
-                    .addComponent(hexBoardJRadioButton)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(iniciarJButton, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(rWordleLJRadioButton)
-                            .addComponent(prismJRadioButton))
-                        .addGap(19, 19, 19)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(matrizEsparsaJCheckBox)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(reduceSpaceCheckBox)
-                                .addGap(36, 36, 36))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(anguloJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(recentralizarJRadioButton))))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(86, 86, 86)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(overlapTreeJRadioButton)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(vpscJRadioButton)
+                        .addComponent(rWordleCJRadioButton)
+                        .addComponent(projSnippetJRadioButton)
+                        .addComponent(incBoardJRadioButton)
+                        .addComponent(hexBoardJRadioButton)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(iniciarJButton, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(rWordleLJRadioButton)
+                                .addComponent(prismJRadioButton))
+                            .addGap(19, 19, 19)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(matrizEsparsaJCheckBox)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(reduceSpaceCheckBox)
+                                    .addGap(36, 36, 36))
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(jLabel2)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(anguloJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addComponent(recentralizarJRadioButton))))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(86, 86, 86))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -591,11 +598,13 @@ public class RemoveOverlapView extends javax.swing.JFrame {
                         .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(hexBoardJRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(overlapTreeJRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(iniciarJButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -605,7 +614,35 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         Map<OverlapRect, OverlapRect> reprojected = null;
         ArrayList<OverlapRect> projectedValues = null;
         ArrayList<OverlapRect> rects = formRectangles();
-        if( rWordleCJRadioButton.isSelected() ) {
+        
+        if( overlapTreeJRadioButton.isSelected() ) {
+            Point2D.Double[] points = new Point2D.Double[rects.size()];
+            
+            for( int i = 0; i < rects.size(); ++i ) {
+                points[i] = new Point2D.Double(rects.get(i).x, rects.get(i).y);
+            }
+            
+            
+            RepresentativeFinder kmeans = new KMeans(Arrays.asList(points), new FarPointsMedoidApproach(), (int)(points.length*0.1));
+            
+            
+            
+            ExplorerTreeController controller = new ExplorerTreeController(points, 
+                     rects.stream().map((e)->new Point2D.Double(e.getCenterX(), e.getCenterY())).toArray(Point2D.Double[]::new),
+                     kmeans, 10, 20, 20/2);
+
+            OverlapTree overlapTree = new OverlapTree(controller, 1);
+            Map<OverlapRect, OverlapRect> projected = overlapTree.applyAndShowTime(rects);
+            projectedValues = Util.getProjectedValues(projected);
+
+            controller = null;
+
+            
+            
+            
+            
+            
+        } else if( rWordleCJRadioButton.isSelected() ) {
             
             double[] center0 = Util.getCenter(rects);
             RWordleC rwordlec = new RWordleC();
@@ -910,6 +947,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JCheckBox matrizEsparsaJCheckBox;
+    private javax.swing.JRadioButton overlapTreeJRadioButton;
     private javax.swing.JRadioButton prismJRadioButton;
     private javax.swing.JRadioButton projSnippetJRadioButton;
     private javax.swing.JRadioButton rWordleCJRadioButton;
