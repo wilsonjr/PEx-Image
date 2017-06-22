@@ -623,13 +623,13 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             }
             
             
-            RepresentativeFinder kmeans = new KMeans(Arrays.asList(points), new FarPointsMedoidApproach(), (int)(points.length*0.1));
+            RepresentativeFinder kmeans = new KMeans(Arrays.asList(points), new FarPointsMedoidApproach(), 10);
             
             
             
             ExplorerTreeController controller = new ExplorerTreeController(points, 
                      rects.stream().map((e)->new Point2D.Double(e.getCenterX(), e.getCenterY())).toArray(Point2D.Double[]::new),
-                     kmeans, 10, 20, 20/2);
+                     kmeans, 5, 20, 20/2);
 
             OverlapTree overlapTree = new OverlapTree(controller, 1);
             Map<OverlapRect, OverlapRect> projected = overlapTree.applyAndShowTime(rects);
