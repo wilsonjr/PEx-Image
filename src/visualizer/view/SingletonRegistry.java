@@ -20,8 +20,7 @@ public class SingletonRegistry {
     public synchronized static Object getInstance(String className) {
         Object classInstantiation = map.get(className);
         
-        if( classInstantiation == null ) {
-            
+        if( classInstantiation == null ) {            
             try {
                 classInstantiation = Class.forName(className).newInstance();
                 map.put(className, classInstantiation);

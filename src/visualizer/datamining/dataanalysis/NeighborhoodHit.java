@@ -256,6 +256,9 @@ public class NeighborhoodHit extends javax.swing.JDialog {
 
         for (int i = 0; i < series.size(); i++) {
             double[] values = this.neighborhoodHit(series.get(i).filename, maxneigh);
+             for( int j = 0; j < values.length; ++j ) {
+                System.out.println(series.get(i).name+","+values[j]+","+(j+1));
+            }
             XYSeries xyseries = this.createSerie(series.get(i).name, values);
             xyseriescollection.addSeries(xyseries);
         }
