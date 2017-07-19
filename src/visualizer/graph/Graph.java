@@ -217,6 +217,7 @@ public class Graph implements java.io.Serializable {
         // isso é temporário, quando abrir a projeção não pode estragar a remoção de sobreposição
         java.awt.Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
         java.awt.Dimension d = tk.getScreenSize();
+        System.out.println("THIS IS THE HEIGHT: "+d.getHeight());
         this.normalizeVertex(this.vertex.get(0).getRayBase() * 5 + 10, ((float) (d.getHeight())) / 1.65f);
     }
 
