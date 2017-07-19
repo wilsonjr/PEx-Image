@@ -519,8 +519,7 @@ public class GroupAnalysisView extends javax.swing.JFrame {
         fileDataButton.setEnabled(state);
     }//GEN-LAST:event_saveDataCheckBoxActionPerformed
     
-    public static GroupAnalysisView getInstance() {
-        
+    public static GroupAnalysisView getInstance() {        
         return (GroupAnalysisView) SingletonRegistry.getInstance(CLASS_NAME);
     }
     

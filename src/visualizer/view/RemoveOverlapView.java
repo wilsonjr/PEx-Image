@@ -20,6 +20,7 @@ import br.com.methods.utils.OverlapRect;
 import br.com.methods.utils.Util;
 import br.com.representative.RepresentativeFinder;
 import br.com.representative.clustering.FarPointsMedoidApproach;
+import br.com.representative.clustering.partitioning.Dbscan;
 import br.com.representative.clustering.partitioning.KMeans;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
@@ -624,12 +625,12 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             
             
             RepresentativeFinder kmeans = new KMeans(Arrays.asList(points), new FarPointsMedoidApproach(), (int)(points.length*0.1));
-            
+            RepresentativeFinder dbscan = new Dbscan(Arrays.asList(points), 50, (int)(60.0/100.0)*7);
             
             
             ExplorerTreeController controller = new ExplorerTreeController(points, 
                      rects.stream().map((e)->new Point2D.Double(e.getCenterX(), e.getCenterY())).toArray(Point2D.Double[]::new),
-                     kmeans, 10, 20, 20/2);
+                     kmeans, 7, 20, 20/2);
 
             OverlapTree overlapTree = new OverlapTree(controller, 1);
             Map<OverlapRect, OverlapRect> projected = overlapTree.applyAndShowTime(rects);
