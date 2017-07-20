@@ -448,13 +448,13 @@ public class RemoveOverlapView extends javax.swing.JFrame {
                     w += 3;
                     h += 3;
                 }
-                retangulos.add(new OverlapRect(x, y, 20, 20));
+                retangulos.add(new OverlapRect(x, y, w, h));
             } else {
                 
                 int x = ((int) vertices.get(i).getX()) - vertices.get(i).getRay();
                 int y = ((int) vertices.get(i).getY()) - vertices.get(i).getRay();
                 int raio = vertices.get(i).getRay()*2;
-                retangulos.add(new OverlapRect(x, y, 20, 20));
+                retangulos.add(new OverlapRect(x, y, raio, raio));
             }
             
         }
