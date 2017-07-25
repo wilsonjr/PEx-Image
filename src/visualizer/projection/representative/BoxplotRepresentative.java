@@ -64,6 +64,15 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
                 float[] vLocal = generator.generateLocalAnalysis(selected);            
                 addValues(vLocal, generator.toString(), "Local", dataset);                
                 addValues(vGlobal, generator.toString(), "Global", dataset); 
+                
+                for( int i = 0; i < vGlobal.length; ++i ) {
+                    System.out.println("Global,"+vGlobal[i]);
+                }
+                
+                for( int i = 0; i < vLocal.length; ++i ) {
+                    System.out.println("Local,"+vLocal[i]);
+                }
+                
             } else if( generator.analysisType().equals(AnalysisType.LOCAL) ) {
                 float[] vLocal = generator.generateLocalAnalysis(selected);            
                 addValues(vLocal, generator.toString(), "Local", dataset);  
@@ -75,6 +84,10 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
             if( compareWithProjection ) {
                 float[] cProjection = generator.generateGlobalAnalysis(projection, projection);
                 addValues(cProjection, generator.toString(), "Proj.", dataset);
+                
+                for( int i = 0; i < cProjection.length; ++i ) {
+                    System.out.println("Projection,"+cProjection[i]);
+                }
             }
             
             
@@ -100,8 +113,6 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         
         for( int i = 0; i < boxplotDataGenerator.size(); ++i ) {
             BoxAndWhiskerCategoryDataset dataset = createDataSet(boxplotDataGenerator.get(i), selected, projection);
-            
-            
             
             toSave = prepareDataContent(i, dataset, toSave);
             
