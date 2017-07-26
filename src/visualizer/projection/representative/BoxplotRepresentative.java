@@ -238,6 +238,32 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         return generatedImage;
     }
     
+    
+    public String createStript(String filename, String title) {
+        
+        String script = "datasetStress <- read.csv(\""+filename+"\", header=TRUE, encoding=\"UTF-8\")" +
+                        "ggplot(datasetStress, aes(x=Type, y=Value, fill=Type)) + " +
+                                "geom_boxplot(fill='#AA1233', alpha=0.6) +"+
+                                "scale_y_continuous(name = \"Value\") +"+
+                                "scale_x_discrete(name = \"Type\") +"+
+                                "ggtitle(\""+title+"\") +"+
+                                "theme_classic() +"+
+                                "theme(plot.title = element_text(size = 14, family = \"Tahoma\", face = \"bold\"), "+
+                                        "text = element_text(size = 12, family = \"Tahoma\"), "+
+                                        "axis.title = element_text(size = 14, face=\"bold\"), "+
+                                        "axis.text.x = element_text(size = 13, face=\"bold\"), "+
+                                        "axis.text.y = element_text(size = 13, face=\"bold\"), "+
+                                        "legend.title = element_text(size=14), "+
+                                        "legend.text = element_text(size=14), "+
+                                        "legend.position = \"right\") + "+
+                                "scale_fill_brewer(palette = \"Accent\") + "+
+                                "labs(fill=\"Type\");";
+        
+        
+        return "";
+    }
+    
+    
     public class SmallMultiplesPanel extends JPanel {
         
         public SmallMultiplesPanel(int rows, int cols) {
