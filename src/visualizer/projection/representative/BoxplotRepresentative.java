@@ -278,7 +278,7 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         
         try {
             
-            RConnection connection = new RConnection();
+            RConnection connection = ConnectionSingleton.getInstance();                   
             String script = createScript(filename, title);
             System.out.println(script);
             REXP exp = connection.eval(script);             
@@ -353,6 +353,21 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
                 }
             }
         }
+    }
+    
+    private static class ConnectionSingleton {
+        private static RConnection rConnection = null;
+        
+        private ConnectionSingleton() {}
+        
+        public static RConnection getInstance() throws RserveException {
+            if( rConnection == null ) {
+                rConnection = new RConnection();
+            }                
+            
+            return rConnection;
+        }
+        
     }
     
 }
