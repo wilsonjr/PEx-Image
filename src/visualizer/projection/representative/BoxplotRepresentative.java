@@ -32,9 +32,17 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.BoxAndWhiskerRenderer;
 import org.jfree.data.statistics.BoxAndWhiskerCategoryDataset;
 import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
+import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.REXPMismatchException;
+import org.rosuda.REngine.REngine;
+import org.rosuda.REngine.REngineException;
+import org.rosuda.REngine.Rserve.RConnection;
+import org.rosuda.REngine.Rserve.RserveException;
 import visualizer.matrix.Matrix;
 import visualizer.view.color.ColorScale;
 import visualizer.view.color.RainbowScale;
+
+
 
 /**
  *
@@ -58,27 +66,47 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
             Matrix selected, Matrix projection) {        
         try {
             DefaultBoxAndWhiskerCategoryDataset dataset = new DefaultBoxAndWhiskerCategoryDataset();    
-
-            if( generator.analysisType().equals(AnalysisType.BOTH) ) {                
-                float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
-                float[] vLocal = generator.generateLocalAnalysis(selected);            
-                addValues(vLocal, generator.toString(), "Local", dataset);                
-                addValues(vGlobal, generator.toString(), "Global", dataset); 
                 
-                for( int i = 0; i < vGlobal.length; ++i ) {
-                    System.out.println("Global,"+vGlobal[i]);
-                }
-                
-                for( int i = 0; i < vLocal.length; ++i ) {
-                    System.out.println("Local,"+vLocal[i]);
-                }
-                
-            } else if( generator.analysisType().equals(AnalysisType.LOCAL) ) {
-                float[] vLocal = generator.generateLocalAnalysis(selected);            
-                addValues(vLocal, generator.toString(), "Local", dataset);  
-            } else if( generator.analysisType().equals(AnalysisType.GLOBAL) ) {
-                float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
-                addValues(vGlobal, generator.toString(), "Global", dataset);                 
+            String filename = generator.toString()+".csv";
+            File file = new File(filename);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write("Type,Value\n");
+            
+            switch (generator.analysisType()) {
+                case BOTH:
+                    {
+                        float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
+                        float[] vLocal = generator.generateLocalAnalysis(selected);
+                        addValues(vLocal, generator.toString(), "Local", dataset);
+                        addValues(vGlobal, generator.toString(), "Global", dataset);
+                        for( int i = 0; i < vGlobal.length; ++i ) {
+                            writer.write("Global,"+vGlobal[i]+"\n");
+                        }       
+                        for( int i = 0; i < vLocal.length; ++i ) {
+                            writer.write("Local,"+vLocal[i]+"\n");
+                        }       
+                        break;
+                    }
+                case LOCAL:
+                    {
+                        float[] vLocal = generator.generateLocalAnalysis(selected);
+                        addValues(vLocal, generator.toString(), "Local", dataset);
+                        for( int i = 0; i < vLocal.length; ++i ) {
+                            writer.write("Local,"+vLocal[i]+"\n");
+                        }
+                        break;
+                    }
+                case GLOBAL:                 
+                    {
+                        float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
+                        addValues(vGlobal, generator.toString(), "Global", dataset);
+                        for( int i = 0; i < vGlobal.length; ++i ) {
+                            writer.write("Global,"+vGlobal[i]+"\n");
+                        } 
+                        break;
+                    }
+                default:
+                    break;
             }
             
             if( compareWithProjection ) {
@@ -86,10 +114,16 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
                 addValues(cProjection, generator.toString(), "Proj.", dataset);
                 
                 for( int i = 0; i < cProjection.length; ++i ) {
-                    System.out.println("Projection,"+cProjection[i]);
+                    writer.write("Projection,"+cProjection[i]+"\n");
                 }
             }
             
+            writer.flush();
+            writer.close();
+            filename = file.getAbsolutePath();
+            filename = filename.replace("\\", "\\\\");
+            
+            executeScript(filename, generator.toString());
             
             return dataset;
         } catch( IOException e ) {
@@ -196,9 +230,11 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
     
     @Override
     public JPanel generateRepresentative(Matrix selected, Matrix projection) {
-        generatedImage = ((SmallMultiplesPanel)getSmallMultiples(selected, projection)).getImage();
+        SmallMultiplesPanel panel = ((SmallMultiplesPanel)getSmallMultiples(selected, projection));
         
-        return getSmallMultiples(selected, projection);        
+        generatedImage = panel.getImage();
+        
+        return panel;        
     }
 
     public void geraImagem(Matrix mCluster, Matrix projection, String string) {
@@ -238,12 +274,29 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         return generatedImage;
     }
     
-    
-    public String createStript(String filename, String title) {
+    private void executeScript(String filename, String title) {
         
-        String script = "datasetStress <- read.csv(\""+filename+"\", header=TRUE, encoding=\"UTF-8\")" +
-                        "ggplot(datasetStress, aes(x=Type, y=Value, fill=Type)) + " +
-                                "geom_boxplot(fill='#AA1233', alpha=0.6) +"+
+        try {
+            
+            RConnection connection = new RConnection();
+            String script = createScript(filename, title);
+            System.out.println(script);
+            REXP exp = connection.eval(script);             
+            
+        } catch (RserveException ex) {
+            Logger.getLogger(BoxplotRepresentative.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
+    
+    private String createScript(String filename, String title) {
+        
+        String script = "require(Cairo);" +
+                        "require(ggplot2);" +
+                        "Cairo(file=\""+filename.replace("csv", "png")+"\", type=\"png\", units=\"in\", width=9.5, height=5, pointsize=12, dpi=1200);" +
+                        "datasetStress <- read.csv(\""+filename+"\", header=TRUE, encoding=\"UTF-8\");" +
+                        "print(ggplot(datasetStress, aes(x=Type, y=Value, fill=Type)) +" +
+                                "geom_boxplot(fill='#AA1233', alpha=0.6) +" +
                                 "scale_y_continuous(name = \"Value\") +"+
                                 "scale_x_discrete(name = \"Type\") +"+
                                 "ggtitle(\""+title+"\") +"+
@@ -257,10 +310,10 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
                                         "legend.text = element_text(size=14), "+
                                         "legend.position = \"right\") + "+
                                 "scale_fill_brewer(palette = \"Accent\") + "+
-                                "labs(fill=\"Type\");";
+                                "labs(fill=\"Type\"));"+
+                        "dev.off();";
         
-        
-        return "";
+        return script;
     }
     
     
