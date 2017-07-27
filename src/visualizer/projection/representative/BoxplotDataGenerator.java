@@ -16,6 +16,8 @@ import visualizer.matrix.Matrix;
 public interface BoxplotDataGenerator {    
     float[] generateLocalAnalysis(Matrix cluster) throws IOException;
     float[] generateGlobalAnalysis(Matrix selected, Matrix projection) throws IOException;
+    String getColor();
+    
     
     default AnalysisType analysisType() {
         return AnalysisType.GLOBAL;

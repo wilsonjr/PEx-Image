@@ -66,4 +66,9 @@ public class StressClusterData implements BoxplotDataGenerator {
     public AnalysisType analysisType() {
         return type;
     }
+    
+    @Override
+    public String getColor() {
+        return "red";
+    }
 }

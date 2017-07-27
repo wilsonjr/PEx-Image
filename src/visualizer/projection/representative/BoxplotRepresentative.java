@@ -127,7 +127,7 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
             filename = file.getAbsolutePath();
             filename = filename.replace("\\", "\\\\");
             
-            executeScript(filename, generator.toString());
+            executeScript(filename, generator.toString(), generator.getColor());
             
             return new Pair<>(dataset, filename.replace("csv", "png")) ;
         } catch( IOException e ) {
@@ -180,20 +180,16 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
             BufferedImage img = null;
             try {
                 img = ImageIO.read(new File(imagePath));
+                
+                ImagePanel imgPanel = new ImagePanel(img.getScaledInstance(WIDTH, HEIGHT, Image.SCALE_SMOOTH));
+                ImagePanel imgPanelImage = new ImagePanel(img.getScaledInstance(WIDTH/NUM_COLS, HEIGHT/NUM_COLS, Image.SCALE_SMOOTH));
+
+                smallMultiples.add(imgPanel);
+                smallMultiplesImage.add(imgPanelImage);
             } catch( IOException e ) {
                 System.err.println("Can't open image");
             }  
-            
-                        
-            ImagePanel imgPanel = new ImagePanel(img.getScaledInstance(WIDTH, HEIGHT, Image.SCALE_SMOOTH));
-            ImagePanel imgPanelImage = new ImagePanel(img.getScaledInstance(WIDTH/NUM_COLS, HEIGHT/NUM_COLS, Image.SCALE_SMOOTH));
-            
-            
-            smallMultiples.add(imgPanel);
-            smallMultiplesImage.add(imgPanelImage);
         }
-                
-        
         return new Pair<>(smallMultiples, smallMultiplesImage);
     }
 
@@ -298,13 +294,13 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         return generatedImage;
     }
     
-    private void executeScript(String filename, String title) {
+    private void executeScript(String filename, String title, String color) {
         
         try {
             
             RConnection connection = ConnectionSingleton.getInstance();   
             String imageName = filename.replace("csv", "png");
-            String script = createScript(filename, title, imageName);
+            String script = createScript(filename, title, imageName, color);
             System.out.println(script);
             REXP exp = connection.eval(script);             
             
@@ -314,14 +310,14 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         
     }
     
-    private String createScript(String filename, String title, String image) {
+    private String createScript(String filename, String title, String image, String color) {
         
         String script = "require(Cairo);" +
                         "require(ggplot2);" +
-                        "Cairo(file=\""+image+"\", type=\"png\", units=\"in\", width=5, height=5, pointsize=5, dpi=1200);" +
+                        "Cairo(file=\""+image+"\", type=\"png\", units=\"in\", width=5, height=5, pointsize=5, dpi=600);" +
                         "datasetStress <- read.csv(\""+filename+"\", header=TRUE, encoding=\"UTF-8\");" +
                         "print(ggplot(datasetStress, aes(x=Type, y=Value, fill=Type)) +" +
-                                "geom_boxplot(fill='#AA1233', alpha=0.6) +" +
+                                "geom_boxplot(fill='"+color+"', alpha=0.6) +" +
                                 "scale_y_continuous(name = \"Value\") +"+
                                 "scale_x_discrete(name = \"Type\") +"+
                                 "ggtitle(\""+title+"\") +"+
