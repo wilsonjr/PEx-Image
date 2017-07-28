@@ -141,13 +141,14 @@ public class GraphBuilder {
             dmat = DistanceMatrixFactory.getInstance(view, pdata);
             cdata = dmat.getClassData();
             ids = dmat.getIds();
-
+            
+            
             //saving the data
             this.saveData(pdata, dmat, null);
 
             proj = ProjectionFactory.getInstance(pdata.getProjectionType());
             projection = proj.project(dmat, pdata, view);
-
+            graph.setProjection(projection);
             pdata.setNumberObjects(dmat.getElementCount());
 
         } else if (pdata.getSourceType() == SourceType.IMAGES) {
@@ -189,7 +190,8 @@ public class GraphBuilder {
             pdata.setNumberDimensions(matrix.getDimensions());
 
             dmat = proj.getDistanceMatrix();
-
+             
+            graph.setProjection(projection);
             //saving the data
             this.saveData(pdata, dmat, null);
            
@@ -220,12 +222,13 @@ public class GraphBuilder {
 
             proj = ProjectionFactory.getInstance(pdata.getProjectionType());
             projection = proj.project(matrix, pdata, view);
-
+            
             pdata.setNumberObjects(matrix.getRowCount());
             pdata.setNumberDimensions(matrix.getDimensions());
 
             dmat = proj.getDistanceMatrix();
-
+            
+            graph.setProjection(projection);
             //saving the data
             this.saveData(pdata, dmat, null);
         }

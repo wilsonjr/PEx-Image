@@ -217,7 +217,6 @@ public class Graph implements java.io.Serializable {
         // isso é temporário, quando abrir a projeção não pode estragar a remoção de sobreposição
         java.awt.Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
         java.awt.Dimension d = tk.getScreenSize();
-        System.out.println("THIS IS THE HEIGHT: "+d.getHeight());
         this.normalizeVertex(this.vertex.get(0).getRayBase() * 5 + 10, ((float) (d.getHeight())) / 1.65f);
     }
 
@@ -804,6 +803,7 @@ public class Graph implements java.io.Serializable {
     protected ArrayList<Representative> representatives = new ArrayList<>();
     protected ArrayList<Representative> autoRepresentatives = new ArrayList<>();
     protected ArrayList<Connectivity> connectivities = new ArrayList<>();
+    protected float[][] projection;
 
     public ArrayList<Representative> getAutoRepresentative() {
         return autoRepresentatives;
@@ -836,6 +836,16 @@ public class Graph implements java.io.Serializable {
             if( clusterRender.inside(p, autoRepresentatives.get(i)) )
                 autoRepresentatives.get(i).listenClick();        
     }
+
+    public float[][] getProjection() {
+        return projection;
+    }
+
+    public void setProjection(float[][] projection) {
+        this.projection = projection;
+    }
+    
+    
 
     
     

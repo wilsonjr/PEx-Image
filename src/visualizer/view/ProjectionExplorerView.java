@@ -2520,6 +2520,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
 
     private void transformProjection(ArrayList<OverlapRect> projection) {
         Graph graph = ((Viewer) this.desktop.getSelectedFrame()).getGraph();
+        
         ArrayList<Vertex> vertices = graph.getVertex();
         for( int i = 0; i < vertices.size(); ++i ) {
             if( vertices.get(i).isDrawAsImages() ) {
@@ -2551,6 +2552,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
         Viewer gv = (Viewer) this.desktop.getSelectedFrame();
         if( gv != null ) {
             Graph graph = gv.getGraph();
+            
             if( graph != null ) {       
                 initialProjection = new ArrayList<>();
                 transformProjection(initialProjection);

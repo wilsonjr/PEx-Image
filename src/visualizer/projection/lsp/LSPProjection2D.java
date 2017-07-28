@@ -209,7 +209,7 @@ public class LSPProjection2D extends Projection
 
 		Logger.getLogger(this.getClass().getName()).log(Level.INFO,
 						"Least Square Projection (LSP) time: " + (finish - start) / 1000.0f + "s");
-
+                
 		return projection;
 	}
 
