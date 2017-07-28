@@ -654,7 +654,7 @@ public class Vertex implements Comparable, java.io.Serializable {
     private Color color = Color.BLACK; //The vertex color    
     private float x = 0; //The x-coodinate of the vertex
     private float y = 0;  //The y-coodinate of the vertex
-    private int rayBase = 10; //The rayFactor of the vertex
+    private int rayBase = 4; //The rayFactor of the vertex
     private float rayFactor = 0;  //The size of vertex ray (it must stay between 0.0 and 1.0)
     public ForceData fdata; //Use to repositioning the points
     private boolean valid = true; //identifies if a vertex is valid
