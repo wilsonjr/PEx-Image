@@ -64,4 +64,9 @@ public class SilhouetteCoefficientClusterData implements BoxplotDataGenerator {
     public AnalysisType analysisType() {
         return type;
     }
+    
+    @Override
+    public String getColor() {
+        return "orange";
+    }
 }

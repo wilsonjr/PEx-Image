@@ -99,4 +99,9 @@ public class NeighborhoodPreservationClusterData implements BoxplotDataGenerator
     public AnalysisType analysisType() {
         return type;
     }
+    
+    @Override
+    public String getColor() {
+        return "blue";
+    }
 }

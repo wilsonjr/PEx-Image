@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -22,7 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.util.Pair;
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -32,9 +37,14 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.BoxAndWhiskerRenderer;
 import org.jfree.data.statistics.BoxAndWhiskerCategoryDataset;
 import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
+import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.Rserve.RConnection;
+import org.rosuda.REngine.Rserve.RserveException;
 import visualizer.matrix.Matrix;
 import visualizer.view.color.ColorScale;
 import visualizer.view.color.RainbowScale;
+
+
 
 /**
  *
@@ -43,6 +53,8 @@ import visualizer.view.color.RainbowScale;
 public class BoxplotRepresentative implements RepresentativeGenerator {
     private List<BoxplotDataGenerator> boxplotDataGenerator;
     private final int NUM_COLS = 2;
+    public final int WIDTH = 320;
+    public final int HEIGHT = 290;
     private boolean compareWithProjection = true;
     private Image generatedImage = null;
     private String toSave;
@@ -54,31 +66,51 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
        this.generatedImage = null;
     }
     
-    private BoxAndWhiskerCategoryDataset createDataSet(BoxplotDataGenerator generator,
+    private Pair<BoxAndWhiskerCategoryDataset, String> createDataSet(BoxplotDataGenerator generator,
             Matrix selected, Matrix projection) {        
         try {
             DefaultBoxAndWhiskerCategoryDataset dataset = new DefaultBoxAndWhiskerCategoryDataset();    
-
-            if( generator.analysisType().equals(AnalysisType.BOTH) ) {                
-                float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
-                float[] vLocal = generator.generateLocalAnalysis(selected);            
-                addValues(vLocal, generator.toString(), "Local", dataset);                
-                addValues(vGlobal, generator.toString(), "Global", dataset); 
                 
-                for( int i = 0; i < vGlobal.length; ++i ) {
-                    System.out.println("Global,"+vGlobal[i]);
-                }
-                
-                for( int i = 0; i < vLocal.length; ++i ) {
-                    System.out.println("Local,"+vLocal[i]);
-                }
-                
-            } else if( generator.analysisType().equals(AnalysisType.LOCAL) ) {
-                float[] vLocal = generator.generateLocalAnalysis(selected);            
-                addValues(vLocal, generator.toString(), "Local", dataset);  
-            } else if( generator.analysisType().equals(AnalysisType.GLOBAL) ) {
-                float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
-                addValues(vGlobal, generator.toString(), "Global", dataset);                 
+            String filename = generator.toString()+".csv";
+            File file = new File(filename);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write("Type,Value\n");
+            
+            switch (generator.analysisType()) {
+                case BOTH:
+                    {
+                        float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
+                        float[] vLocal = generator.generateLocalAnalysis(selected);
+                        addValues(vLocal, generator.toString(), "Local", dataset);
+                        addValues(vGlobal, generator.toString(), "Global", dataset);
+                        for( int i = 0; i < vGlobal.length; ++i ) {
+                            writer.write("Global,"+vGlobal[i]+"\n");
+                        }       
+                        for( int i = 0; i < vLocal.length; ++i ) {
+                            writer.write("Local,"+vLocal[i]+"\n");
+                        }       
+                        break;
+                    }
+                case LOCAL:
+                    {
+                        float[] vLocal = generator.generateLocalAnalysis(selected);
+                        addValues(vLocal, generator.toString(), "Local", dataset);
+                        for( int i = 0; i < vLocal.length; ++i ) {
+                            writer.write("Local,"+vLocal[i]+"\n");
+                        }
+                        break;
+                    }
+                case GLOBAL:                 
+                    {
+                        float[] vGlobal = generator.generateGlobalAnalysis(selected, projection);
+                        addValues(vGlobal, generator.toString(), "Global", dataset);
+                        for( int i = 0; i < vGlobal.length; ++i ) {
+                            writer.write("Global,"+vGlobal[i]+"\n");
+                        } 
+                        break;
+                    }
+                default:
+                    break;
             }
             
             if( compareWithProjection ) {
@@ -86,12 +118,18 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
                 addValues(cProjection, generator.toString(), "Proj.", dataset);
                 
                 for( int i = 0; i < cProjection.length; ++i ) {
-                    System.out.println("Projection,"+cProjection[i]);
+                    writer.write("Projection,"+cProjection[i]+"\n");
                 }
             }
             
+            writer.flush();
+            writer.close();
+            filename = file.getAbsolutePath();
+            filename = filename.replace("\\", "\\\\");
             
-            return dataset;
+            executeScript(filename, generator.toString(), generator.getColor());
+            
+            return new Pair<>(dataset, filename.replace("csv", "png")) ;
         } catch( IOException e ) {
             throw new RuntimeException(e);
         }        
@@ -104,15 +142,19 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         dataset.add(list, rowKey, colKey);
     }
     
-    public JPanel getSmallMultiples(Matrix selected, Matrix projection) {
+    public Pair<JPanel, JPanel> getSmallMultiples(Matrix selected, Matrix projection) {
         
         int numero_linhas = numeroLinhas();        
         SmallMultiplesPanel smallMultiples = new SmallMultiplesPanel(numero_linhas, NUM_COLS);
+        SmallMultiplesPanel smallMultiplesImage = new SmallMultiplesPanel(numero_linhas, NUM_COLS);
         ColorScale scn = new RainbowScale();        
         toSave = boxplotDataGenerator.size()+"\n";
         
         for( int i = 0; i < boxplotDataGenerator.size(); ++i ) {
-            BoxAndWhiskerCategoryDataset dataset = createDataSet(boxplotDataGenerator.get(i), selected, projection);
+            
+            Pair<BoxAndWhiskerCategoryDataset, String>  elems = createDataSet(boxplotDataGenerator.get(i), selected, projection);
+            BoxAndWhiskerCategoryDataset dataset = elems.getKey();
+            String imagePath = elems.getValue();
             
             toSave = prepareDataContent(i, dataset, toSave);
             
@@ -133,12 +175,22 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
             ChartPanel panel = new ChartPanel(chart);  
             //panel.setMouseWheelEnabled(true);
             panel.setMouseZoomable(true);
+            
         
-            smallMultiples.add(panel);
-        }
+            BufferedImage img = null;
+            try {
+                img = ImageIO.read(new File(imagePath));
                 
-        
-        return smallMultiples;
+                ImagePanel imgPanel = new ImagePanel(img.getScaledInstance(WIDTH, HEIGHT, Image.SCALE_SMOOTH));
+                ImagePanel imgPanelImage = new ImagePanel(img.getScaledInstance(WIDTH/NUM_COLS, HEIGHT/NUM_COLS, Image.SCALE_SMOOTH));
+
+                smallMultiples.add(imgPanel);
+                smallMultiplesImage.add(imgPanelImage);
+            } catch( IOException e ) {
+                System.err.println("Can't open image");
+            }  
+        }
+        return new Pair<>(smallMultiples, smallMultiplesImage);
     }
 
     private int numeroLinhas() {
@@ -196,14 +248,18 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
     
     @Override
     public JPanel generateRepresentative(Matrix selected, Matrix projection) {
-        generatedImage = ((SmallMultiplesPanel)getSmallMultiples(selected, projection)).getImage();
+        Pair<JPanel, JPanel> panels = getSmallMultiples(selected, projection);
         
-        return getSmallMultiples(selected, projection);        
+        SmallMultiplesPanel panel = (SmallMultiplesPanel) panels.getKey();
+        
+        generatedImage = ((SmallMultiplesPanel)panels.getValue()).getImage();
+        
+        return panel;        
     }
 
     public void geraImagem(Matrix mCluster, Matrix projection, String string) {
         
-        ((SmallMultiplesPanel)getSmallMultiples(mCluster, projection)).saveImage(string);
+        ((SmallMultiplesPanel)getSmallMultiples(mCluster, projection).getValue()).saveImage(string);
     }
 
     public void save(File file) {
@@ -238,12 +294,30 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         return generatedImage;
     }
     
-    
-    public String createStript(String filename, String title) {
+    private void executeScript(String filename, String title, String color) {
         
-        String script = "datasetStress <- read.csv(\""+filename+"\", header=TRUE, encoding=\"UTF-8\")" +
-                        "ggplot(datasetStress, aes(x=Type, y=Value, fill=Type)) + " +
-                                "geom_boxplot(fill='#AA1233', alpha=0.6) +"+
+        try {
+            
+            RConnection connection = ConnectionSingleton.getInstance();   
+            String imageName = filename.replace("csv", "png");
+            String script = createScript(filename, title, imageName, color);
+            System.out.println(script);
+            REXP exp = connection.eval(script);             
+            
+        } catch (RserveException ex) {
+            Logger.getLogger(BoxplotRepresentative.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
+    
+    private String createScript(String filename, String title, String image, String color) {
+        
+        String script = "require(Cairo);" +
+                        "require(ggplot2);" +
+                        "Cairo(file=\""+image+"\", type=\"png\", units=\"in\", width=5, height=5, pointsize=5, dpi=600);" +
+                        "datasetStress <- read.csv(\""+filename+"\", header=TRUE, encoding=\"UTF-8\");" +
+                        "print(ggplot(datasetStress, aes(x=Type, y=Value, fill=Type)) +" +
+                                "geom_boxplot(fill='"+color+"', alpha=0.6) +" +
                                 "scale_y_continuous(name = \"Value\") +"+
                                 "scale_x_discrete(name = \"Type\") +"+
                                 "ggtitle(\""+title+"\") +"+
@@ -251,20 +325,39 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
                                 "theme(plot.title = element_text(size = 14, family = \"Tahoma\", face = \"bold\"), "+
                                         "text = element_text(size = 12, family = \"Tahoma\"), "+
                                         "axis.title = element_text(size = 14, face=\"bold\"), "+
-                                        "axis.text.x = element_text(size = 13, face=\"bold\"), "+
-                                        "axis.text.y = element_text(size = 13, face=\"bold\"), "+
+                                        "axis.text.x = element_text(size = 14, face=\"bold\"), "+
+                                        "axis.text.y = element_text(size = 14, face=\"bold\"), "+
                                         "legend.title = element_text(size=14), "+
                                         "legend.text = element_text(size=14), "+
                                         "legend.position = \"right\") + "+
                                 "scale_fill_brewer(palette = \"Accent\") + "+
-                                "labs(fill=\"Type\");";
+                                "labs(fill=\"Type\"));"+
+                        "dev.off();";
         
-        
-        return "";
+        return script;
     }
     
+    public class ImagePanel extends JPanel {
+        private Image image;
+        
+        public ImagePanel(Image image) {
+            this.image = image;
+        }
+        
+        @Override
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if( image != null ) {
+                g.drawImage(image, 0, 0, this);
+                
+            }
+        }
+        
+    }
     
-    public class SmallMultiplesPanel extends JPanel {
+    public  class SmallMultiplesPanel extends JPanel {
+        
+       
         
         public SmallMultiplesPanel(int rows, int cols) {
             super(new GridLayout(rows, cols));
@@ -300,6 +393,21 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
                 }
             }
         }
+    }
+    
+    private static class ConnectionSingleton {
+        private static RConnection rConnection = null;
+        
+        private ConnectionSingleton() {}
+        
+        public static RConnection getInstance() throws RserveException {
+            if( rConnection == null ) {
+                rConnection = new RConnection();
+            }                
+            
+            return rConnection;
+        }
+        
     }
     
 }

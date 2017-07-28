@@ -113,7 +113,7 @@ public class Representative extends ClusterLabel {
     public void listenClick() {
         JFrame frame = new JFrame("Cluster Analysis");
         frame.setContentPane(representativeAsPanel);   
-        frame.setSize(400, 400);
+        frame.setSize(658, 620);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
