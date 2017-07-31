@@ -157,6 +157,8 @@ public class XMLGraphWriter {
                 out.write("<vertex id=\"");
                 out.write(Long.toString(v.getId()));
                 out.write("\">\r\n");
+                
+                
 
                 out.write("<valid value=\"");
                 if (v.isValid()) {
@@ -177,7 +179,10 @@ public class XMLGraphWriter {
                 out.write("<url value=\"");
                 out.write(convert(deConvert(encodeToValidChars(v.getUrl()))));
                 out.write("\"/>\r\n");
-
+                
+                System.out.print(Long.toString(v.getId())+";"+Float.toString(v.getX())+";"+Float.toString(v.getY())+";");
+                System.out.println(convert(deConvert(encodeToValidChars(v.getUrl()))));
+                
                 out.write("<scalars>\r\n");
                 for (Scalar s : graph.getScalars()) {
                     out.write("<scalar name=\"");
