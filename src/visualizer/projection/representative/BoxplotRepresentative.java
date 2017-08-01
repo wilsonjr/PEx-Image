@@ -53,8 +53,8 @@ import visualizer.view.color.RainbowScale;
 public class BoxplotRepresentative implements RepresentativeGenerator {
     private List<BoxplotDataGenerator> boxplotDataGenerator;
     private final int NUM_COLS = 2;
-    public final int WIDTH = 320;
-    public final int HEIGHT = 290;
+    public final int WIDTH = 400;
+    public final int HEIGHT = 370;
     private boolean compareWithProjection = true;
     private Image generatedImage = null;
     private String toSave;
@@ -361,7 +361,7 @@ public class BoxplotRepresentative implements RepresentativeGenerator {
         
         public SmallMultiplesPanel(int rows, int cols) {
             super(new GridLayout(rows, cols));
-            setSize(320, 290);
+            setSize(400, 370);
         }
         
         public Image getImage() {
