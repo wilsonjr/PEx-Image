@@ -56,7 +56,7 @@ public class Renderer implements RepresentativeRenderer {
         }
         
         if( rep.getClusterId() != null ) {
-            g.setFont(new Font("Courier New", 1, 30));
+            g.setFont(new Font("Courier New", 1, 15));
             g2.drawString(rep.getClusterId(), position.x-6, position.y-6);
         }
     }
