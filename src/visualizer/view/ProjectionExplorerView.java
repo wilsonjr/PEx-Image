@@ -56,6 +56,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.Point2D;
 import java.beans.PropertyVetoException;
 import java.io.File;
 import java.io.FileWriter;
@@ -69,7 +70,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
@@ -138,6 +138,7 @@ import visualizer.featureselection.FeatureSelectionView;
 import visualizer.featureselection.NeuralNetworkClassifierView;
 import visualizer.graph.Representative;
 import visualizer.matrix.MatrixFactory;
+import visualizer.projection.representative.Analysis;
 import visualizer.view.tools.FeaturesWeightView;
 import visualizer.view.tools.MovePointsView;
 import visualizer.view.tools.MultimodalVolumeReaderView;
@@ -2625,7 +2626,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
 
     private void autoGroupAnalysisMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoGroupAnalysisMenuItemActionPerformed
         
-        System.out.println("ola");
+        
         Viewer[] rs = new Viewer[desktop.getAllFrames().length];
         for( int i = 0; i < rs.length; ++i )
             rs[i] = (Viewer) desktop.getAllFrames()[i];
@@ -2641,19 +2642,30 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
             
             ProjectionViewer pv = (ProjectionViewer) gv;
             
-            float[][] fSimilarity = pv.getGraph().getProjection();
-            double[][] similarity = new double[fSimilarity.length][fSimilarity.length];
-            
-            for( int i = 0; i < similarity.length; ++i )
-                for( int j = 0; j < similarity[i].length; ++j )
-                    similarity[i][j] = fSimilarity[i][j];
-            
-            //ProjectionWizardView.getInstance(this).getProcess().getBuilder().
-            
-            System.out.println(">> "+pv.getGraph().getProjectionData().getSourceFile());
-            
-            //MatrixFactory.getInstance(pv.getGraph().getProjectionData().getSourceFile());
-            
+            try {
+                List<List<Double>> attrs = new ArrayList<>();
+                Matrix matrix = MatrixFactory.getInstance(pv.getGraph().getProjectionData().getSourceFile());
+                for( int i = 0; i < matrix.getRowCount(); ++i ) {
+                    List<Double> values = new ArrayList<>();                    
+                    for( int j = 0; j < matrix.getDimensions(); ++j )
+                        values.add((double)matrix.getRow(i).getValue(j));
+                    attrs.add(values);
+                }
+                
+                List<Vertex> vertices = pv.getGraph().getVertex();
+                
+                Point2D.Double[] points = new Point2D.Double[vertices.size()];
+                for( int i = 0; i < points.length; ++i )
+                    points[i] = new Point2D.Double(vertices.get(i).getX(), vertices.get(i).getY());
+                     
+                
+                
+                Analysis analysis = new Analysis(attrs, points, true);
+                analysis.execute();
+                
+            } catch( IOException e ) {
+                System.out.println("Can't open file.");
+            }
         }
     }//GEN-LAST:event_representativeJMenuItemActionPerformed
 
