@@ -179,6 +179,11 @@ public class Graph implements java.io.Serializable {
             }
         }
         
+        vertex.stream().filter((v)->v.isRepresentative()).forEach((v)->v.draw(g2, false));
+        
+        
+        
+        
         Renderer groupRender = RendererFactory.get("GroupRenderer");
         Renderer clusterRender = RendererFactory.get("ClusterRenderer");
         

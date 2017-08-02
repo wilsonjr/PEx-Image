@@ -206,6 +206,7 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         toolButton = new javax.swing.JButton();
         separatorLabel5 = new javax.swing.JLabel();
         removeOverlapJButton = new javax.swing.JButton();
+        representativeJButton = new javax.swing.JButton();
         runForceButton = new javax.swing.JButton();
         searchPanel = new javax.swing.JPanel();
         searchToolbarLabel = new javax.swing.JLabel();
@@ -421,13 +422,24 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         separatorLabel5.setText("       ");
         toolBar.add(separatorLabel5);
 
-        removeOverlapJButton.setText("Remove Overlapping");
+        removeOverlapJButton.setText("Overlap Removal");
         removeOverlapJButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeOverlapJButtonActionPerformed(evt);
             }
         });
         toolBar.add(removeOverlapJButton);
+
+        representativeJButton.setText("Representative Selection");
+        representativeJButton.setFocusable(false);
+        representativeJButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        representativeJButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        representativeJButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                representativeJButtonActionPerformed(evt);
+            }
+        });
+        toolBar.add(representativeJButton);
 
         runForceButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/toolbarButtonGraphics/media/Play16.gif"))); // NOI18N
         runForceButton.setToolTipText("Run Force Directed Layout");
@@ -2653,7 +2665,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
                 }
                 
                 List<Vertex> vertices = pv.getGraph().getVertex();
-                
+                System.out.println("vertices: "+vertices.size());
                 Point2D.Double[] points = new Point2D.Double[vertices.size()];
                 for( int i = 0; i < points.length; ++i )
                     points[i] = new Point2D.Double(vertices.get(i).getX(), vertices.get(i).getY());
@@ -2668,6 +2680,17 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
             }
         }
     }//GEN-LAST:event_representativeJMenuItemActionPerformed
+
+    private void representativeJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_representativeJButtonActionPerformed
+        Viewer gv = (Viewer) desktop.getSelectedFrame();
+        if( gv != null ) {
+            ProjectionViewer pv = (ProjectionViewer) gv;
+            
+            RepresentativeSelectionView repView = new RepresentativeSelectionView(pv);
+            repView.setLocationRelativeTo(this);
+            repView.setVisible(true);
+        }
+    }//GEN-LAST:event_representativeJButtonActionPerformed
 
     void updateButtons() {
         Viewer gv = (Viewer) this.desktop.getSelectedFrame();
@@ -2932,6 +2955,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
     private javax.swing.JPanel pointsPanel;
     private javax.swing.JMenuItem pointsToMatlab_jMenuItem;
     private javax.swing.JButton removeOverlapJButton;
+    private javax.swing.JButton representativeJButton;
     private javax.swing.JMenuItem representativeJMenuItem;
     private javax.swing.JMenu rulesMenu;
     private javax.swing.JButton runForceButton;

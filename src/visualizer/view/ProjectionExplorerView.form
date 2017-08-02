@@ -978,10 +978,21 @@
         </Component>
         <Component class="javax.swing.JButton" name="removeOverlapJButton">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Remove Overlapping"/>
+            <Property name="text" type="java.lang.String" value="Overlap Removal"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeOverlapJButtonActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="representativeJButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Representative Selection"/>
+            <Property name="focusable" type="boolean" value="false"/>
+            <Property name="horizontalTextPosition" type="int" value="0"/>
+            <Property name="verticalTextPosition" type="int" value="3"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="representativeJButtonActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JButton" name="runForceButton">

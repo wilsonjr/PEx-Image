@@ -42,31 +42,30 @@ public class Analysis {
     private double maxDistance;
     
     public Analysis(List<List<Double>> attrs, Point2D.Double[] points, boolean dataset) {
-        createSimilarityMatrix();
-        createVects();
         this.attrs = attrs;
         this.points = points;
         this.dataset = dataset;
+        createSimilarityMatrix();
+        createVects();
     }
     
     public void execute() {
         
-        
         // tests for CBR-ILP-IR dataset
         if( dataset ) {
             
-            RepresentativeFinder sss = (RepresentativeFinder) RepresentativeRegistry.getInstance(SSS.class, elems, 0.134, maxDistance); // verificar se é isso msm
-            RepresentativeFinder gnat = (RepresentativeFinder) RepresentativeRegistry.getInstance(GNAT.class, elems, 19);
-            RepresentativeFinder kmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.0331));
-            RepresentativeFinder kmedoid = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMedoid.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.0331));
-            RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*0.0331), attrs.size());
-            RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.0331));
-            RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.17, 17, 21);
-            RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 17, 21);
-            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*0.0331), 15, 0.2f, 15.0f/(float)points.length);
+            RepresentativeFinder sss = (RepresentativeFinder) RepresentativeRegistry.getInstance(SSS.class, elems, 0.1297, maxDistance); // verificar se é isso msm
+//            RepresentativeFinder gnat = (RepresentativeFinder) RepresentativeRegistry.getInstance(GNAT.class, elems, 21);
+//            RepresentativeFinder kmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.038));
+//            RepresentativeFinder kmedoid = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMedoid.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.038));
+//            RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*0.038), attrs.size());
+//            RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.038));
+//            RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.09, 21, 21);
+//            RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 21, 21);
+//            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*0.038), 15, 0.2f, 15.0f/(float)points.length);
 
 
-            List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, kmeans, kmedoid, csm, ksvd, ds3, ap, furs);
+            List<RepresentativeFinder> techniques = Arrays.asList(sss);//, gnat, kmeans, kmedoid, csm, ksvd, ds3, ap, furs);
 
             techniques.forEach((v) -> {
 
@@ -74,12 +73,13 @@ public class Analysis {
 
                     v.execute();
                     int[] indexes = v.getRepresentatives();
+                    System.out.println("Size: "+indexes.length);
 
-                    Point2D.Double[] points = new Point2D.Double[indexes.length];
+                    Point2D.Double[] pts = new Point2D.Double[indexes.length];
                     for( int i = 0; i < indexes.length; ++i )  
-                            points[i] = new Point2D.Double(points[indexes[i]].x, points[indexes[i]].y);
+                            pts[i] = new Point2D.Double(points[indexes[i]].x, points[indexes[i]].y);
 
-                    AnalysisController.execute(indexes, similarity, points);
+                    AnalysisController.execute(indexes, similarity, pts);
 
                     System.out.println("\n");
 

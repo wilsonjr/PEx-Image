@@ -191,6 +191,12 @@ public class Vertex implements Comparable, java.io.Serializable {
                     g2.setColor(Color.BLACK);
                     g2.drawOval(((int) this.x) - this.getRay(), ((int) this.y)
                             - this.getRay(), this.getRay() * 2, this.getRay() * 2);
+                    
+                    if( isRepresentative() ) {
+                        g2.setColor(Color.YELLOW);
+                        g2.fillRect(((int) this.x) - this.getRay(), ((int) this.y)
+                            - this.getRay(), this.getRay() * 2, this.getRay() * 2);
+                    }
                                         
                     g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
 
@@ -540,6 +546,14 @@ public class Vertex implements Comparable, java.io.Serializable {
 //            }
 //        }
     }
+    
+    public boolean isRepresentative() {
+        return representative;
+    }
+    
+    public void setRepresentative(boolean representative) {
+        this.representative = representative;
+    }
 
     public void removeScalar(Scalar scalar) {
         if (scalar != null && this.scalars.size() > scalar.getIndex()) {
@@ -661,4 +675,5 @@ public class Vertex implements Comparable, java.io.Serializable {
     private boolean selected = false;
     private static boolean showNonValid = true;
     private static boolean drawClassOnImage = true;
+    private boolean representative = false;
 }
