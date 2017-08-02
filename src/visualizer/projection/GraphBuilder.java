@@ -200,7 +200,9 @@ public class GraphBuilder {
             matrix = MatrixFactory.getInstance(view, pdata);
             cdata = matrix.getClassData();
             ids = matrix.getIds();
-
+            
+            
+            
             //normalization
             Normalization norm = NormalizationFactory.getInstance(pdata.getNormalization());
             matrix = norm.execute(matrix);
@@ -410,6 +412,10 @@ public class GraphBuilder {
             String filename = pdata.getDistanceMatrixFilename();
             dmat.save(filename);
         }
+    }
+    
+    public DistanceMatrix getDistanceMatrix() {
+        return dmat;
     }
 
     private IOException exception;
