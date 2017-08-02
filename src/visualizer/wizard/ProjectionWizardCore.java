@@ -218,6 +218,13 @@ public class ProjectionWizardCore {
             this.builder.stop();
         }
     }    //Possible directions to follow in the wizard
+    
+    public GraphBuilder getBuilder() {
+        return builder;
+    }
+    
+    
+    
     public static final int NEXT_STATE = 0;
     public static final int PREVIOUS_STATE = 1;
     //States of create projection wizard

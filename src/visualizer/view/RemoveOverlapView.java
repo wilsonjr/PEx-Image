@@ -6,7 +6,6 @@
 
 package visualizer.view;
 
-import br.com.explore.explorertree.ExplorerTreeController;
 import br.com.methods.overlap.expadingnode.OverlapTree;
 import br.com.methods.overlap.hexboard.HexBoardExecutor;
 import br.com.methods.overlap.incboard.IncBoardExecutor;
@@ -616,34 +615,7 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         ArrayList<OverlapRect> projectedValues = null;
         ArrayList<OverlapRect> rects = formRectangles();
         
-        if( overlapTreeJRadioButton.isSelected() ) {
-            Point2D.Double[] points = new Point2D.Double[rects.size()];
-            
-            for( int i = 0; i < rects.size(); ++i ) {
-                points[i] = new Point2D.Double(rects.get(i).x, rects.get(i).y);
-            }
-            
-            
-            RepresentativeFinder kmeans = new KMeans(Arrays.asList(points), new FarPointsMedoidApproach(), (int)(points.length*0.1));
-            RepresentativeFinder dbscan = new Dbscan(Arrays.asList(points), 50, (int)(60.0/100.0)*7);
-            
-            
-            ExplorerTreeController controller = new ExplorerTreeController(points, 
-                     rects.stream().map((e)->new Point2D.Double(e.getCenterX(), e.getCenterY())).toArray(Point2D.Double[]::new),
-                     kmeans, 7, 20, 20/2);
-
-            OverlapTree overlapTree = new OverlapTree(controller, 1);
-            Map<OverlapRect, OverlapRect> projected = overlapTree.applyAndShowTime(rects);
-            projectedValues = Util.getProjectedValues(projected);
-
-            controller = null;
-
-            
-            
-            
-            
-            
-        } else if( rWordleCJRadioButton.isSelected() ) {
+        if( rWordleCJRadioButton.isSelected() ) {
             
             double[] center0 = Util.getCenter(rects);
             RWordleC rwordlec = new RWordleC();

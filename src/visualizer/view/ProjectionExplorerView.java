@@ -137,6 +137,7 @@ import visualizer.view.tools.WordsManager;
 import visualizer.featureselection.FeatureSelectionView;
 import visualizer.featureselection.NeuralNetworkClassifierView;
 import visualizer.graph.Representative;
+import visualizer.matrix.MatrixFactory;
 import visualizer.view.tools.FeaturesWeightView;
 import visualizer.view.tools.MovePointsView;
 import visualizer.view.tools.MultimodalVolumeReaderView;
@@ -329,6 +330,7 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         euclideanDistanceMenuItem = new javax.swing.JMenuItem();
         groupAnalysisJMenuItem = new javax.swing.JMenuItem();
         autoGroupAnalysisMenuItem = new javax.swing.JMenuItem();
+        representativeJMenuItem = new javax.swing.JMenuItem();
         clusteringMenu = new javax.swing.JMenu();
         multidimensionalMenuItem = new javax.swing.JMenuItem();
         silhouetteCoefficientMenuItem = new javax.swing.JMenuItem();
@@ -1363,6 +1365,14 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
             }
         });
         dataAnalysisMenu.add(autoGroupAnalysisMenuItem);
+
+        representativeJMenuItem.setText("Representative Analysis");
+        representativeJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                representativeJMenuItemActionPerformed(evt);
+            }
+        });
+        dataAnalysisMenu.add(representativeJMenuItem);
 
         dataMiningMenu.add(dataAnalysisMenu);
 
@@ -2623,6 +2633,28 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
             ((ProjectionViewer)gv).getClusterAnalysisView().display(rs);        
     }//GEN-LAST:event_autoGroupAnalysisMenuItemActionPerformed
 
+    private void representativeJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_representativeJMenuItemActionPerformed
+        Viewer gv = (Viewer) this.desktop.getSelectedFrame();
+        if( gv != null ) {
+            
+            ProjectionViewer pv = (ProjectionViewer) gv;
+            
+            float[][] fSimilarity = pv.getGraph().getProjection();
+            double[][] similarity = new double[fSimilarity.length][fSimilarity.length];
+            
+            for( int i = 0; i < similarity.length; ++i )
+                for( int j = 0; j < similarity[i].length; ++j )
+                    similarity[i][j] = fSimilarity[i][j];
+            
+            //ProjectionWizardView.getInstance(this).getProcess().getBuilder().
+            
+            System.out.println(">> "+pv.getGraph().getProjectionData().getSourceFile());
+            
+            //MatrixFactory.getInstance(pv.getGraph().getProjectionData().getSourceFile());
+            
+        }
+    }//GEN-LAST:event_representativeJMenuItemActionPerformed
+
     void updateButtons() {
         Viewer gv = (Viewer) this.desktop.getSelectedFrame();
         if (gv != null && gv.getGraph().isCorpus()) {
@@ -2886,6 +2918,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
     private javax.swing.JPanel pointsPanel;
     private javax.swing.JMenuItem pointsToMatlab_jMenuItem;
     private javax.swing.JButton removeOverlapJButton;
+    private javax.swing.JMenuItem representativeJMenuItem;
     private javax.swing.JMenu rulesMenu;
     private javax.swing.JButton runForceButton;
     private javax.swing.JButton saveButton;
