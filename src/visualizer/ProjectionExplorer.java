@@ -78,17 +78,23 @@ public class ProjectionExplorer {
             Logger.getLogger(ProjectionExplorer.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                ProjectionExplorerView pexview = new ProjectionExplorerView();
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                ProjectionExplorerView pexview = new ProjectionExplorerView();
+//                
+//                pexview.setVisible(true);
+//                pexview.toFront();
+//                
+//
+//            }
+//
+//        });
+        
+        ProjectionExplorerView pexview = new ProjectionExplorerView();
+                
                 pexview.setVisible(true);
-                pexview.toFront();
-
-            }
-
-        });
     }
 
 }

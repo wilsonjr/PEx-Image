@@ -737,20 +737,20 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="groupAnalysisJMenuItemActionPerformed"/>
                   </Events>
                 </MenuItem>
-                <MenuItem class="javax.swing.JMenuItem" name="autoGroupAnalysisMenuItem">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="Automatic Group Analysis"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autoGroupAnalysisMenuItemActionPerformed"/>
-                  </Events>
-                </MenuItem>
                 <MenuItem class="javax.swing.JMenuItem" name="representativeJMenuItem">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Representative Analysis"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="representativeJMenuItemActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="autoGroupAnalysisMenuItem">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Automatic Group Analysis"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autoGroupAnalysisMenuItemActionPerformed"/>
                   </Events>
                 </MenuItem>
               </SubComponents>
@@ -1011,6 +1011,11 @@
             <Property name="verticalGap" type="int" value="0"/>
           </Layout>
           <SubComponents>
+            <Component class="javax.swing.JButton" name="jButton1">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="jButton1"/>
+              </Properties>
+            </Component>
             <Component class="javax.swing.JLabel" name="searchToolbarLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Search"/>
