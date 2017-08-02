@@ -2624,6 +2624,8 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
     }//GEN-LAST:event_groupAnalysisJMenuItemActionPerformed
 
     private void autoGroupAnalysisMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoGroupAnalysisMenuItemActionPerformed
+        
+        System.out.println("ola");
         Viewer[] rs = new Viewer[desktop.getAllFrames().length];
         for( int i = 0; i < rs.length; ++i )
             rs[i] = (Viewer) desktop.getAllFrames()[i];
