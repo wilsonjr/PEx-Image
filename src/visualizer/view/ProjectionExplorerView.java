@@ -207,7 +207,6 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         removeOverlapJButton = new javax.swing.JButton();
         runForceButton = new javax.swing.JButton();
         searchPanel = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
         searchToolbarLabel = new javax.swing.JLabel();
         searchToolbarTextField = new javax.swing.JTextField();
         goToolbarButton = new javax.swing.JButton();
@@ -330,8 +329,8 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         sizeIncreaseMenuItem = new javax.swing.JMenuItem();
         euclideanDistanceMenuItem = new javax.swing.JMenuItem();
         groupAnalysisJMenuItem = new javax.swing.JMenuItem();
-        representativeJMenuItem = new javax.swing.JMenuItem();
         autoGroupAnalysisMenuItem = new javax.swing.JMenuItem();
+        representativeJMenuItem = new javax.swing.JMenuItem();
         clusteringMenu = new javax.swing.JMenu();
         multidimensionalMenuItem = new javax.swing.JMenuItem();
         silhouetteCoefficientMenuItem = new javax.swing.JMenuItem();
@@ -442,9 +441,6 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         toolBar.add(runForceButton);
 
         searchPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 5, 0));
-
-        jButton1.setText("jButton1");
-        searchPanel.add(jButton1);
 
         searchToolbarLabel.setText("Search");
         searchPanel.add(searchToolbarLabel);
@@ -1362,14 +1358,6 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         });
         dataAnalysisMenu.add(groupAnalysisJMenuItem);
 
-        representativeJMenuItem.setText("Representative Analysis");
-        representativeJMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                representativeJMenuItemActionPerformed(evt);
-            }
-        });
-        dataAnalysisMenu.add(representativeJMenuItem);
-
         autoGroupAnalysisMenuItem.setText("Automatic Group Analysis");
         autoGroupAnalysisMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1377,6 +1365,14 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
             }
         });
         dataAnalysisMenu.add(autoGroupAnalysisMenuItem);
+
+        representativeJMenuItem.setText("Representative Analysis");
+        representativeJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                representativeJMenuItemActionPerformed(evt);
+            }
+        });
+        dataAnalysisMenu.add(representativeJMenuItem);
 
         dataMiningMenu.add(dataAnalysisMenu);
 
@@ -2888,7 +2884,6 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
     private javax.swing.JMenu importMenu;
     private javax.swing.JMenuItem importScalarsOption;
     private javax.swing.JMenuItem importtitles;
-    private javax.swing.JButton jButton1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JMenuItem joinScalarsOptions;
     private javax.swing.JMenuItem knnOptions;
