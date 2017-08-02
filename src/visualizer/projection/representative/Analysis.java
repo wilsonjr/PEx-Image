@@ -22,6 +22,7 @@ import br.com.representative.lowrank.KSvd;
 import br.com.representative.metric.GNAT;
 import br.com.representative.metric.SSS;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,26 +38,20 @@ public class Analysis {
     private Point2D.Double[] points;
     private List<Vect> elems;
     private boolean dataset;
+    private double[][] distances;
+    private double maxDistance;
     
-    public Analysis(double[][] similarity, List<List<Double>> attrs, Point2D.Double[] points, List<Vect> elems, 
-                    boolean dataset) {
-        this.similarity = similarity;
+    public Analysis(List<List<Double>> attrs, Point2D.Double[] points, boolean dataset) {
+        createSimilarityMatrix();
+        createVects();
         this.attrs = attrs;
         this.points = points;
-        this.elems = elems;
         this.dataset = dataset;
     }
     
     public void execute() {
         
-        double maxDistance = -1.0;
-        double[][] distances = new double[points.length][points.length];
-        for( int i = 0; i < distances.length; ++i )
-            for( int j = i; j < distances.length; ++j ) {
-                distances[i][j] = Util.euclideanDistance(points[i].x, points[i].y, points[j].x, points[j].y);
-                distances[j][i] = distances[i][j];
-                maxDistance = Math.max(maxDistance, distances[i][j]);
-            }
+        
         // tests for CBR-ILP-IR dataset
         if( dataset ) {
             
@@ -125,6 +120,35 @@ public class Analysis {
             
         }
         
+    }
+
+    private void createSimilarityMatrix() {
+        double minDistance =  Util.euclideanDistance(points[0].x, points[0].y, points[0].x, points[0].y);
+        maxDistance = -1.0;
+        distances = new double[points.length][points.length];
+        for( int i = 0; i < distances.length; ++i )
+            for( int j = i; j < distances.length; ++j ) {
+                distances[i][j] = Util.euclideanDistance(points[i].x, points[i].y, points[j].x, points[j].y);
+                distances[j][i] = distances[i][j];
+                maxDistance = Math.max(maxDistance, distances[i][j]);
+                minDistance = Math.min(minDistance, distances[i][j]);
+            }
+        
+        // normalize distances
+        similarity = new double[distances.length][distances.length];        
+        for( int i = 0; i < similarity.length; ++i )
+            for( int j = 0; j < similarity.length; ++j )
+                similarity[i][j] = (distances[i][j]-minDistance)/(maxDistance-minDistance);
+        
+        
+    }
+
+    private void createVects() {
+        elems = new ArrayList<>();
+        
+        Arrays.asList(points).stream().forEach((v)-> {
+            elems.add(new Vect(new double[]{v.x, v.y}));
+        });
     }
     
     
