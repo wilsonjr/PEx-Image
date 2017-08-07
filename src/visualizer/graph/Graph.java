@@ -57,7 +57,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import visualizer.corpus.Corpus;
@@ -160,33 +162,44 @@ public class Graph implements java.io.Serializable {
             }
         }
 
-        //Draw each vertice of the graph
-        for (Vertex v : this.vertex) {
-            if (!v.isValid()) {
-                v.draw(g2, false);
-            }
-        }
-
-        for (Vertex v : this.vertex) {
-            if (v.isValid() && !v.isSelected()) {
-                v.draw(g2, globalsel);
-            }
-        }
-
-        for (Vertex v : this.vertex) {
-            if (v.isValid() && v.isSelected()) {
-                v.draw(g2, globalsel);
-            }
-        }
         
-        vertex.stream().filter((v)->v.isRepresentative()).forEach((v)->v.draw(g2, false));
         
+        List<Vertex> repVertices = vertex.stream().filter((v)->v.isRepresentative()).collect(Collectors.toList());
+        if( !repVertices.isEmpty() ) {
+            this.vertex.forEach((v)->{
+                
+                v.setSelected(false);
+                v.draw(g2, true);
+                
+            });
+            
+            repVertices.forEach((v)->v.draw(g2, false));
+        } else {
+            
+            //Draw each vertice of the graph
+            for (Vertex v : this.vertex) {
+                if (!v.isValid()) {
+                    v.draw(g2, false);
+                }
+            }
+
+            for (Vertex v : this.vertex) {
+                if (v.isValid() && !v.isSelected()) {
+                    v.draw(g2, globalsel);
+                }
+            }
+
+            for (Vertex v : this.vertex) {
+                if (v.isValid() && v.isSelected()) {
+                    v.draw(g2, globalsel);
+                }
+            }
+        }
         
         
         
         Renderer groupRender = RendererFactory.get("GroupRenderer");
         Renderer clusterRender = RendererFactory.get("ClusterRenderer");
-        
         
         representatives.forEach((r)->{
             

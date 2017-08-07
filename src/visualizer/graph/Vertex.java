@@ -134,7 +134,7 @@ public class Vertex implements Comparable, java.io.Serializable {
 
             case Vertex.DRAW_AS_DOTS: //draw as points
                 if (this.valid) {
-                    if (!globalsel || this.selected) {
+                    if (!globalsel || this.selected ) {
                         g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
                     } else {
                         g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.2f));
@@ -185,6 +185,7 @@ public class Vertex implements Comparable, java.io.Serializable {
                         g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.2f));
                     }
 
+                    
                     g2.setColor(this.color);
                     g2.fillOval(((int) this.x) - this.getRay(), ((int) this.y)
                             - this.getRay(), this.getRay() * 2, this.getRay() * 2);
@@ -193,7 +194,7 @@ public class Vertex implements Comparable, java.io.Serializable {
                             - this.getRay(), this.getRay() * 2, this.getRay() * 2);
                     
                     if( isRepresentative() ) {
-                        g2.setColor(Color.YELLOW);
+                        g2.setColor(Color.BLACK);
                         g2.fillRect(((int) this.x) - this.getRay(), ((int) this.y)
                             - this.getRay(), this.getRay() * 2, this.getRay() * 2);
                     }
