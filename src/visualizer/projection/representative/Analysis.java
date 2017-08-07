@@ -67,8 +67,10 @@ public class Analysis {
             RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*0.038), 15, 0.2f, 15.0f/(float)points.length);
 
 
-            List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, kmeans, kmedoid, csm, ksvd, ds3, ap, furs);
-
+            //List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, kmeans, kmedoid, bkmeans, csm, ksvd, ds3, ap, furs);
+                
+            List<RepresentativeFinder> techniques = Arrays.asList(bkmeans);
+            
             techniques.forEach((v) -> {
 
                     
@@ -150,7 +152,6 @@ public class Analysis {
         for( int i = 0; i < similarity.length; ++i )
             for( int j = 0; j < similarity.length; ++j )
                 similarity[i][j] = (distances[i][j]-minDistance)/(maxDistance-minDistance);
-        
         
     }
 
