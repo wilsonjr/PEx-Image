@@ -8,10 +8,15 @@ package visualizer.view;
 import br.com.methods.utils.Vect;
 import br.com.representative.RepresentativeFinder;
 import br.com.representative.RepresentativeRegistry;
-import br.com.representative.clustering.furs.FURS;
 import br.com.representative.metric.SSS;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import visualizer.graph.Graph;
 import visualizer.graph.Vertex;
@@ -44,6 +49,7 @@ public class RepresentativeSelectionView extends javax.swing.JFrame {
     private void initComponents() {
 
         representativeSelectionJButton = new javax.swing.JButton();
+        importJButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -54,19 +60,29 @@ public class RepresentativeSelectionView extends javax.swing.JFrame {
             }
         });
 
+        importJButton.setText("Import Representative");
+        importJButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                importJButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(237, Short.MAX_VALUE)
-                .addComponent(representativeSelectionJButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(importJButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(representativeSelectionJButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(266, Short.MAX_VALUE)
+                .addComponent(importJButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 243, Short.MAX_VALUE)
                 .addComponent(representativeSelectionJButton)
                 .addContainerGap())
         );
@@ -107,6 +123,33 @@ public class RepresentativeSelectionView extends javax.swing.JFrame {
         
     }//GEN-LAST:event_representativeSelectionJButtonActionPerformed
 
+    private void importJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importJButtonActionPerformed
+        
+        JFileChooser chooser = new JFileChooser();
+        int result = chooser.showOpenDialog(this);
+        if( result == JFileChooser.APPROVE_OPTION ) {
+            
+            File file = chooser.getSelectedFile();
+            try {
+                Scanner scn = new Scanner(file);
+                
+                List<Integer> indexes = new ArrayList<>();
+                
+                while( scn.hasNext() )
+                    indexes.add(Integer.parseInt(scn.next()));
+                
+                List<Vertex> vertices = projection.getVertex();
+                indexes.stream().forEach((v)->vertices.get(v).setRepresentative(true));
+                
+                gv.updateImage();
+                dispose();
+                
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(RepresentativeSelectionView.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_importJButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -143,6 +186,7 @@ public class RepresentativeSelectionView extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton importJButton;
     private javax.swing.JButton representativeSelectionJButton;
     // End of variables declaration//GEN-END:variables
 }
