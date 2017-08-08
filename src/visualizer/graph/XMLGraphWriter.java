@@ -180,8 +180,10 @@ public class XMLGraphWriter {
                 out.write(convert(deConvert(encodeToValidChars(v.getUrl()))));
                 out.write("\"/>\r\n");
                 
-                System.out.print(Long.toString(v.getId())+";"+Float.toString(v.getX())+";"+Float.toString(v.getY())+";");
-                System.out.println(convert(deConvert(encodeToValidChars(v.getUrl()))));
+                //System.out.print(Long.toString(v.getId())+";"+Float.toString(v.getX())+";"+Float.toString(v.getY())+";");
+                //System.out.println(convert(deConvert(encodeToValidChars(v.getUrl()))));
+                
+                System.out.println(Float.toString(v.getX())+","+Float.toString(v.getY()));
                 
                 out.write("<scalars>\r\n");
                 for (Scalar s : graph.getScalars()) {
