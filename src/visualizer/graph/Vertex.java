@@ -180,7 +180,7 @@ public class Vertex implements Comparable, java.io.Serializable {
             default: //case Vertex.DRAW_AS_CIRCLES:
                 if (this.valid) {
                     if (!globalsel || this.selected) {
-                        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
+                        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.7f));
                     } else { //not selected and there is not a global vertex selected
                         g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.2f));
                     }

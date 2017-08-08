@@ -162,8 +162,6 @@ public class Graph implements java.io.Serializable {
             }
         }
 
-        
-        
         List<Vertex> repVertices = vertex.stream().filter((v)->v.isRepresentative()).collect(Collectors.toList());
         if( !repVertices.isEmpty() ) {
             this.vertex.forEach((v)->{
