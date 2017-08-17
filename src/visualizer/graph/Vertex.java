@@ -194,9 +194,14 @@ public class Vertex implements Comparable, java.io.Serializable {
                             - this.getRay(), this.getRay() * 2, this.getRay() * 2);
                     
                     if( isRepresentative() ) {
+                        g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
                         g2.setColor(Color.BLACK);
-                        g2.fillRect(((int) this.x) - this.getRay(), ((int) this.y)
-                            - this.getRay(), this.getRay() * 2, this.getRay() * 2);
+                        g2.fillOval(((int) this.x) - (int)(this.getRay()*1.5f), ((int) this.y)
+                            - (int)(this.getRay()*1.5f), (int)(this.getRay() * 2 * 1.5f), (int)(this.getRay() * 2 *1.5f));
+                        g2.setColor(this.color);
+                        g2.fillOval(((int) this.x) - this.getRay(), ((int) this.y)
+                                - this.getRay(), this.getRay() * 2, this.getRay() * 2);
+                        
                     }
                                         
                     g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
