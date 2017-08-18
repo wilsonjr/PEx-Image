@@ -64,12 +64,12 @@ public class Analysis {
             RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.038));
             RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.09, 21, 21);
             RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 21, 21);
-            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*0.038), 15, 0.2f, 15.0f/(float)points.length);
+            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(8.0/elems.size())), 5, 0.2f, 15.0f/(float)points.length);
 
 
             //List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, kmeans, kmedoid, bkmeans, csm, ksvd, ds3, ap, furs);
                 
-            List<RepresentativeFinder> techniques = Arrays.asList(bkmeans);
+            List<RepresentativeFinder> techniques = Arrays.asList(furs);
             
             techniques.forEach((v) -> {
 
@@ -86,7 +86,7 @@ public class Analysis {
                             pts[i] = new Point2D.Double(points[indexes[i]].x, points[indexes[i]].y);
 
                     System.out.println("Technique: "+v.toString());
-                    AnalysisController.execute(indexes, similarity, pts); 
+                    AnalysisController.execute(indexes, similarity); 
                     System.out.println("Execution Time: "+ ((endTime-startTime)/1000.0));
                     System.out.println("Number of representatives: "+indexes.length);
                     for( int i = 0; i < indexes.length; ++i )
@@ -108,23 +108,36 @@ public class Analysis {
             RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.023));
             RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.03, 20, 25);
             RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 20, 25);
-            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*0.023), 15, 0.2f, 15.0f/(float)points.length);
+            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(10.0/elems.size())), 250, 0.2f, 15.0f/(float)points.length);
 
 
-            List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, kmeans, kmedoid, csm, ksvd, ds3, ap, furs);
+            List<RepresentativeFinder> techniques = Arrays.asList(furs);
 
             techniques.forEach((v) -> {
 
                     System.out.println("Technique: "+v.toString());
 
+                    long startTime = System.currentTimeMillis();
                     v.execute();
+                    long endTime = System.currentTimeMillis();
                     int[] indexes = v.getRepresentatives();
 
-                    Point2D.Double[] points = new Point2D.Double[indexes.length];
-                    for( int i = 0; i < indexes.length; ++i )  
-                            points[i] = new Point2D.Double(points[indexes[i]].x, points[indexes[i]].y);
+//                    Point2D.Double[] points = new Point2D.Double[indexes.length];
+//                    for( int i = 0; i < indexes.length; ++i )  
+//                            points[i] = new Point2D.Double(points[indexes[i]].x, points[indexes[i]].y);
 
-                    AnalysisController.execute(indexes, similarity, points);
+                    AnalysisController.execute(indexes, similarity);
+                    
+                      System.out.println("Technique: "+v.toString());
+                    AnalysisController.execute(indexes, similarity); 
+                    System.out.println("Execution Time: "+ ((endTime-startTime)/1000.0));
+                    System.out.println("Number of representatives: "+indexes.length);
+                    for( int i = 0; i < indexes.length; ++i )
+                        System.out.print(indexes[i]+" ");
+                    
+                    System.out.println("\n-------");
+
+                    System.out.println("\n");
 
                     System.out.println("\n");
 
