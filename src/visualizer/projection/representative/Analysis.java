@@ -21,6 +21,7 @@ import br.com.representative.dictionaryrepresentation.DS3;
 import br.com.representative.lowrank.CSM;
 import br.com.representative.lowrank.KSvd;
 import br.com.representative.metric.GNAT;
+import br.com.representative.metric.MST;
 import br.com.representative.metric.SSS;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -63,13 +64,14 @@ public class Analysis {
             RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*0.038), attrs.size());
             RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.038));
             RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.09, 21, 21);
-            RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 21, 21);
+            RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 8);
             RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(8.0/elems.size())), 5, 0.2f, 15.0f/(float)points.length);
-
+            
+            RepresentativeFinder mst = (RepresentativeFinder) RepresentativeRegistry.getInstance(MST.class, elems, 70, 8);
 
             //List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, kmeans, kmedoid, bkmeans, csm, ksvd, ds3, ap, furs);
                 
-            List<RepresentativeFinder> techniques = Arrays.asList(furs);
+            List<RepresentativeFinder> techniques = Arrays.asList(mst);
             
             techniques.forEach((v) -> {
 
@@ -99,6 +101,7 @@ public class Analysis {
             });
             
         } else { // tests for ImageCorel dataset
+            System.out.println("ImageCorel");
             
             RepresentativeFinder sss = (RepresentativeFinder) RepresentativeRegistry.getInstance(SSS.class, elems, 0.131, maxDistance); // verificar se é isso msm
             RepresentativeFinder gnat = (RepresentativeFinder) RepresentativeRegistry.getInstance(GNAT.class, elems, 23);
@@ -107,11 +110,13 @@ public class Analysis {
             RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*0.023), attrs.size());
             RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.023));
             RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.03, 20, 25);
-            RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 20, 25);
+            RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 10);
             RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(10.0/elems.size())), 250, 0.2f, 15.0f/(float)points.length);
-
-
-            List<RepresentativeFinder> techniques = Arrays.asList(furs);
+            
+            
+            RepresentativeFinder mst = (RepresentativeFinder) RepresentativeRegistry.getInstance(MST.class, elems, 120, 10);
+            
+            List<RepresentativeFinder> techniques = Arrays.asList(mst);
 
             techniques.forEach((v) -> {
 
