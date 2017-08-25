@@ -58,6 +58,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.beans.PropertyVetoException;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -274,6 +275,7 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         matrixFileConverter_jMenuItem = new javax.swing.JMenuItem();
         pointsToMatlab_jMenuItem = new javax.swing.JMenuItem();
         multiModalVolumeToPoints_jMenuItem = new javax.swing.JMenuItem();
+        savePoints = new javax.swing.JMenuItem();
         menuEdit = new javax.swing.JMenu();
         editClean = new javax.swing.JMenuItem();
         editDelete = new javax.swing.JMenuItem();
@@ -919,6 +921,14 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         converters.add(multiModalVolumeToPoints_jMenuItem);
 
         menuFile.add(converters);
+
+        savePoints.setText("Save Points");
+        savePoints.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                savePointsActionPerformed(evt);
+            }
+        });
+        menuFile.add(savePoints);
 
         menuBar.add(menuFile);
 
@@ -2692,6 +2702,52 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
         }
     }//GEN-LAST:event_representativeJButtonActionPerformed
 
+    private void savePointsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savePointsActionPerformed
+        Viewer gv = (Viewer) desktop.getSelectedFrame();
+        if( gv != null ) {
+            ProjectionViewer pv = (ProjectionViewer) gv;
+            
+            JFileChooser jFileChooser = new JFileChooser();
+
+            int result = jFileChooser.showSaveDialog(this);
+            if( result == JFileChooser.APPROVE_OPTION ) {
+                try {
+                    File file = jFileChooser.getSelectedFile();
+                    FileWriter fw = new FileWriter(file.getAbsoluteFile());
+                    try( BufferedWriter bw = new BufferedWriter(fw) ) {
+                        
+                        List<Vertex> vertices = pv.getGraph().getVertex();
+                        
+                        if( vertices.get(0).isDrawAsCircles() ) {
+                            
+                            bw.write("circle\n");
+                            bw.write(vertices.get(0).getRay()+"\n");
+                            
+                        } else {
+                            bw.write("images\n");
+                            bw.write(vertices.get(0).getImage().getWidth(null));
+                        }
+                                               
+                        vertices.stream().forEach((v) -> { 
+                            
+                            try {
+                                bw.write(String.valueOf(v.getX())+" "+String.valueOf(v.getY())+"\n");
+                            } catch (IOException ex) {
+                                Logger.getLogger(ProjectionExplorerView.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            
+                        });
+                                                
+                    }
+                } catch( IOException e ) {
+
+                }
+            }
+        }
+        
+        
+    }//GEN-LAST:event_savePointsActionPerformed
+
     void updateButtons() {
         Viewer gv = (Viewer) this.desktop.getSelectedFrame();
         if (gv != null && gv.getGraph().isCorpus()) {
@@ -2960,6 +3016,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
     private javax.swing.JMenu rulesMenu;
     private javax.swing.JButton runForceButton;
     private javax.swing.JButton saveButton;
+    private javax.swing.JMenuItem savePoints;
     private javax.swing.JMenuItem scalarConnectivityOptions;
     private javax.swing.JMenu scalarMenu;
     private javax.swing.JScrollPane scrollPanePoints;
