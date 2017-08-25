@@ -2682,7 +2682,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
                      
                 
                 
-                Analysis analysis = new Analysis(attrs, points, true);
+                Analysis analysis = new Analysis(attrs, points, false);
                 analysis.execute();
                 
             } catch( IOException e ) {
