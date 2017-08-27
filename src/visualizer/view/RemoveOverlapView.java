@@ -6,6 +6,8 @@
 
 package visualizer.view;
 
+import br.com.methods.overlap.OverlapRegistry;
+import br.com.methods.overlap.OverlapRemoval;
 import br.com.methods.overlap.expadingnode.OverlapTree;
 import br.com.methods.overlap.hexboard.HexBoardExecutor;
 import br.com.methods.overlap.incboard.IncBoardExecutor;
@@ -450,8 +452,10 @@ public class RemoveOverlapView extends javax.swing.JFrame {
                 retangulos.add(new OverlapRect(x, y, w, h));
             } else {
                 
-                int x = ((int) vertices.get(i).getX()) - vertices.get(i).getRay();
-                int y = ((int) vertices.get(i).getY()) - vertices.get(i).getRay();
+                double x = vertices.get(i).getX();
+                double y = vertices.get(i).getY();
+                
+                
                 int raio = vertices.get(i).getRay()*2;
                 retangulos.add(new OverlapRect(x, y, raio, raio));
             }
@@ -666,9 +670,11 @@ public class RemoveOverlapView extends javax.swing.JFrame {
             
             double[] center0 = Util.getCenter(rects);
             int algo = matrizEsparsaJCheckBox.isSelected() ? 1 : 0;
-            PRISM prism = new PRISM(algo);
-            reprojected = prism.applyAndShowTime(rects);
-            projectedValues = Util.getProjectedValues(reprojected);
+            
+            OverlapRemoval prism = (OverlapRemoval) OverlapRegistry.getInstance(PRISM.class, algo);
+            Map<OverlapRect, OverlapRect> projected = prism.applyAndShowTime(rects);
+            projectedValues = Util.getProjectedValues(projected);
+            
             double[] center1 = Util.getCenter(projectedValues);
             
             

@@ -230,7 +230,7 @@ public class Graph implements java.io.Serializable {
     public void setVertex(ArrayList<Vertex> vertex) {
         this.vertex = vertex;
         
-        // isso é temporário, quando abrir a projeção não pode estragar a remoção de sobreposição
+        // temporary 
         java.awt.Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
         java.awt.Dimension d = tk.getScreenSize();
         this.normalizeVertex(this.vertex.get(0).getRayBase() * 5 + 10, ((float) (d.getHeight())) / 1.65f);

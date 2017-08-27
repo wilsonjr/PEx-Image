@@ -2725,7 +2725,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
                             
                         } else {
                             bw.write("images\n");
-                            bw.write(vertices.get(0).getImage().getWidth(null));
+                            bw.write(vertices.get(0).getImage().getWidth(null)+"\n");
                         }
                                                
                         vertices.stream().forEach((v) -> { 
