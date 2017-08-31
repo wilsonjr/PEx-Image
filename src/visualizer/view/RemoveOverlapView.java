@@ -871,7 +871,6 @@ public class RemoveOverlapView extends javax.swing.JFrame {
         if( projectedValues != null ) {        
             ArrayList<Vertex> vertices = graph.getVertex();
             for( int i = 0; i < vertices.size(); ++i ) {
-                System.out.println(projectedValues.get(i).getId()+": "+projectedValues.get(i).x+"; "+projectedValues.get(i).y);
                 vertices.get(projectedValues.get(i).getId()).setX((float) projectedValues.get(i).getCenterX());
                 vertices.get(projectedValues.get(i).getId()).setY((float) projectedValues.get(i).getCenterY());
             }
