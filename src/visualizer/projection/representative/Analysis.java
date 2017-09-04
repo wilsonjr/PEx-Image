@@ -56,22 +56,22 @@ public class Analysis {
         // tests for CBR-ILP-IR dataset
         if( dataset ) {
             
-            RepresentativeFinder sss = (RepresentativeFinder) RepresentativeRegistry.getInstance(SSS.class, elems, 0.1297, maxDistance); // verificar se é isso msm
-            RepresentativeFinder gnat = (RepresentativeFinder) RepresentativeRegistry.getInstance(GNAT.class, elems, 21);
-            RepresentativeFinder kmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.038));
-            RepresentativeFinder kmedoid = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMedoid.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.038));
-            RepresentativeFinder bkmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(BisectingKMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.038));
-            RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*0.038), attrs.size());
-            RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.038));
-            RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.09, 21, 21);
+            RepresentativeFinder sss = (RepresentativeFinder) RepresentativeRegistry.getInstance(SSS.class, elems, 0.23, maxDistance); // verificar se é isso msm
+            RepresentativeFinder gnat = (RepresentativeFinder) RepresentativeRegistry.getInstance(GNAT.class, elems, 8);
+            RepresentativeFinder kmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*(8.0/elems.size())));
+            RepresentativeFinder kmedoid = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMedoid.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*(8.0/elems.size())));
+            RepresentativeFinder bkmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(BisectingKMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*(8.0/elems.size())));
+            RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*(8.0/elems.size())), attrs.size());
+            RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*(8.0/elems.size())));
+            RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.09, 8, 8);
             RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 8);
-            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(8.0/elems.size())), 5, 0.2f, 15.0f/(float)points.length);
+            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(8.0/elems.size())), 3, 0.2f, 15.0f/(float)points.length);
             
             RepresentativeFinder mst = (RepresentativeFinder) RepresentativeRegistry.getInstance(MST.class, elems, 70, 8);
 
             //List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, kmeans, kmedoid, bkmeans, csm, ksvd, ds3, ap, furs);
                 
-            List<RepresentativeFinder> techniques = Arrays.asList(mst);
+            List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, mst, kmeans, kmedoid, bkmeans, csm, ksvd, ds3, ap, furs);
             
             techniques.forEach((v) -> {
 
@@ -169,7 +169,7 @@ public class Analysis {
         similarity = new double[distances.length][distances.length];        
         for( int i = 0; i < similarity.length; ++i )
             for( int j = 0; j < similarity.length; ++j )
-                similarity[i][j] = (distances[i][j]-minDistance)/(maxDistance-minDistance);
+                similarity[i][j] = 1.0 -(distances[i][j]-minDistance)/(maxDistance-minDistance);
         
     }
 
