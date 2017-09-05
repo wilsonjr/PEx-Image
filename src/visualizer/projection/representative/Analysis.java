@@ -47,7 +47,7 @@ public class Analysis {
         this.attrs = attrs;
         this.points = points;
         this.dataset = dataset;
-        createSimilarityMatrix();
+        createSimilarityMatrix();        
         createVects();
     }
     
@@ -103,20 +103,21 @@ public class Analysis {
         } else { // tests for ImageCorel dataset
             System.out.println("ImageCorel");
             
-            RepresentativeFinder sss = (RepresentativeFinder) RepresentativeRegistry.getInstance(SSS.class, elems, 0.131, maxDistance); // verificar se é isso msm
-            RepresentativeFinder gnat = (RepresentativeFinder) RepresentativeRegistry.getInstance(GNAT.class, elems, 23);
-            RepresentativeFinder kmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.023));
-            RepresentativeFinder kmedoid = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMedoid.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*0.023));
-            RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*0.023), attrs.size());
-            RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*0.023));
-            RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.03, 20, 25);
+            RepresentativeFinder sss = (RepresentativeFinder) RepresentativeRegistry.getInstance(SSS.class, elems, 0.21, maxDistance); // verificar se é isso msm
+            RepresentativeFinder gnat = (RepresentativeFinder) RepresentativeRegistry.getInstance(GNAT.class, elems, 10);
+            RepresentativeFinder kmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*(10.0/elems.size())));
+            RepresentativeFinder bkmeans = (RepresentativeFinder) RepresentativeRegistry.getInstance(BisectingKMeans.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*(10.0/elems.size())));
+            RepresentativeFinder kmedoid = (RepresentativeFinder) RepresentativeRegistry.getInstance(KMedoid.class, elems, new FarPointsMedoidApproach(), (int)(elems.size()*(10.0/elems.size())));
+            RepresentativeFinder csm = (RepresentativeFinder) RepresentativeRegistry.getInstance(CSM.class, attrs, (int)(attrs.size()*(10.0/elems.size())), attrs.size());
+            RepresentativeFinder ksvd = (RepresentativeFinder) RepresentativeRegistry.getInstance(KSvd.class, attrs, (int)(attrs.size()*(10.0/elems.size())));
+            RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.02, 10, 10);
             RepresentativeFinder ap = (RepresentativeFinder) RepresentativeRegistry.getInstance(AffinityPropagation.class, elems, 10);
-            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(10.0/elems.size())), 250, 0.2f, 15.0f/(float)points.length);
+            RepresentativeFinder furs = (RepresentativeFinder) RepresentativeRegistry.getInstance(FURS.class, elems, (int)(elems.size()*(10.0/elems.size())), 3, 0.2f, 15.0f/(float)points.length);
             
             
             RepresentativeFinder mst = (RepresentativeFinder) RepresentativeRegistry.getInstance(MST.class, elems, 120, 10);
             
-            List<RepresentativeFinder> techniques = Arrays.asList(mst);
+            List<RepresentativeFinder> techniques = Arrays.asList(sss, gnat, mst, kmeans, kmedoid, bkmeans, csm, ksvd, ds3, ap, furs);
 
             techniques.forEach((v) -> {
 
@@ -131,9 +132,7 @@ public class Analysis {
 //                    for( int i = 0; i < indexes.length; ++i )  
 //                            points[i] = new Point2D.Double(points[indexes[i]].x, points[indexes[i]].y);
 
-                    AnalysisController.execute(indexes, similarity);
-                    
-                      System.out.println("Technique: "+v.toString());
+                    System.out.println("Technique: "+v.toString());
                     AnalysisController.execute(indexes, similarity); 
                     System.out.println("Execution Time: "+ ((endTime-startTime)/1000.0));
                     System.out.println("Number of representatives: "+indexes.length);
@@ -141,8 +140,6 @@ public class Analysis {
                         System.out.print(indexes[i]+" ");
                     
                     System.out.println("\n-------");
-
-                    System.out.println("\n");
 
                     System.out.println("\n");
 
@@ -170,6 +167,9 @@ public class Analysis {
         for( int i = 0; i < similarity.length; ++i )
             for( int j = 0; j < similarity.length; ++j )
                 similarity[i][j] = 1.0 -(distances[i][j]-minDistance)/(maxDistance-minDistance);
+
+        
+        
         
     }
 
