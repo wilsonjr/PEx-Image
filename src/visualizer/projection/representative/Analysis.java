@@ -151,16 +151,20 @@ public class Analysis {
     }
 
     private void createSimilarityMatrix() {
-        double minDistance =  Util.euclideanDistance(points[0].x, points[0].y, points[0].x, points[0].y);
+        double minDistance =  Double.MAX_VALUE;//Util.euclideanDistance(points[0].x, points[0].y, points[0].x, points[0].y);
         maxDistance = -1.0;
         distances = new double[points.length][points.length];
-        for( int i = 0; i < distances.length; ++i )
-            for( int j = i; j < distances.length; ++j ) {
+        for( int i = 0; i < distances.length; ++i ) {
+            for( int j = i+1; j < distances.length; ++j ) {
                 distances[i][j] = Util.euclideanDistance(points[i].x, points[i].y, points[j].x, points[j].y);
                 distances[j][i] = distances[i][j];
                 maxDistance = Math.max(maxDistance, distances[i][j]);
                 minDistance = Math.min(minDistance, distances[i][j]);
             }
+            distances[i][i] = 0.0;
+        }
+        
+        System.out.println("Min Distance: "+minDistance);
         
         // normalize distances
         similarity = new double[distances.length][distances.length];        
