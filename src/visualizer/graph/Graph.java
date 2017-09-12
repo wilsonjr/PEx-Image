@@ -48,7 +48,14 @@ address = {Washington, DC, USA},
 
 package visualizer.graph;
 
+import br.com.explorer.explorertree.ExplorerTreeController;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Stroke;
+import java.awt.geom.Point2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import visualizer.graph.scalar.QuerySolver;
@@ -58,6 +65,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -860,7 +868,72 @@ public class Graph implements java.io.Serializable {
     public void setProjection(float[][] projection) {
         this.projection = projection;
     }
-    
+
+    public void draw(ExplorerTreeController controller, 
+                     int representativePolygon, 
+                     List<Integer> movingIndexes, 
+                     int parentMoving,
+                     Graphics2D g2Buffer) {
+        
+        int[] representative = controller.representative();
+        Map<Integer, List<Integer>> map = controller.nearest();
+        Point2D.Double[] projectionCenter = controller.projectionCenter();
+        Point2D.Double[] projection = controller.projection();
+
+        for( int i = 0; i < representative.length; ++i ) {
+
+            Vertex v =  getVertex().get(representative[i]);
+
+            Polygon poly = controller.polygon(representative[i]);//getPolygon((int)r.x, (int)r.y);
+            if( poly != null ) {
+                g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.3f));
+                g2Buffer.setColor(Color.RED); 
+
+                g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.3f));
+                if( representative[i] == representativePolygon ) {
+                    Stroke before = g2Buffer.getStroke();
+                    g2Buffer.setStroke(new BasicStroke(5));
+                    g2Buffer.setColor(Color.BLUE);
+                    g2Buffer.draw(poly);                                    
+                    g2Buffer.setStroke(before);
+                } else {
+                    g2Buffer.draw(poly);
+                }
+
+            }
+
+            if( movingIndexes.contains(i) || i == parentMoving )
+                continue;
+
+            g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
+
+            float maxCluster = -1.0f;
+            for( int index: representative )
+                maxCluster = Math.max(maxCluster, map.get(index).size());
+
+            float normalizedSizeCluster = (float)map.get(representative[i]).size()/maxCluster;
+            int red = (int) ((255 * (normalizedSizeCluster*100))/100);
+            int green = 0;
+            int blue = (int) ((255 * (100 - normalizedSizeCluster*100)))/100;
+            Color clusterColor = new Color(red, green, blue);
+            
+            int size = getVertex().get(0).getRay()*2;
+            int sizeScale = size*2;                            
+            
+            
+            // draw the scale
+            g2Buffer.setColor(clusterColor);
+            g2Buffer.fillOval((int)(v.getX()-size/2.0), (int)(v.getY()-size/2.0), sizeScale, sizeScale);                            
+            g2Buffer.setColor(Color.BLACK);
+            g2Buffer.drawOval((int)(v.getX()-size/2.0), (int)(v.getY()-size/2.0), sizeScale, sizeScale);
+            
+            // draw the representive itself
+            
+            v.draw(g2Buffer, false);
+
+        }
+    }
+        
     
 
     

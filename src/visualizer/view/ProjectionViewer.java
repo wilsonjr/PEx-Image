@@ -47,24 +47,47 @@
  * ***** END LICENSE BLOCK ***** */
 package visualizer.view;
 
+import br.com.explore.explorertree.util.ForceLayout;
+import br.com.explore.explorertree.util.Tooltip;
+import br.com.explorer.explorertree.ExplorerTreeController;
+import br.com.explorer.explorertree.ExplorerTreeNode;
+import br.com.methods.overlap.prism.PRISM;
+import br.com.methods.overlap.rwordle.RWordleC;
+import br.com.methods.utils.OverlapRect;
+import br.com.methods.utils.RectangleVis;
+import br.com.test.ui.OverlapView;
+import static br.com.test.ui.ProjectionView.RECTSIZE;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -72,8 +95,13 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.Timer;
 import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
+import nmap.BoundingBox;
+import nmap.Element;
+import nmap.NMap;
 import visualizer.forcelayout.ForceData;
 import visualizer.forcelayout.ForceDirectLayout;
 import visualizer.graph.Edge;
@@ -890,10 +918,51 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
     }
     
     public class ViewPanel extends JPanel {
+        
+        
+        /**
+         ** 
+         * Parameters for multilevel approach
+         **/
+        private boolean semaphore = false;
+        private int parentMoving = -1;
+
+        private Timer timer = null;
+        private Timer timerTooltip = null;
+
+        private int representativePolygon = -1;
+
+        private Point2D.Double lastClicked = null;
+
+        private ExplorerTreeController controller;
+
+        private Point2D.Double[] points;
+
+        private List<Integer> movingIndexes = new ArrayList<>();
+        private List<Point2D.Double> toDraw = new ArrayList<>();
+        private Tooltip tooltip = null;
+
+        private List<List<Integer>> currentCluster = null;
+
+        private Polygon[] diagrams = null;
+        private Polygon[] intersects = null;
+
+        private List<Integer> nearest = null;
+        private boolean hideShowNumbers = false;
+        private int[] selectedRepresentatives = null;
+        
+        /**
+         **** **** **** **** **** **** **** **** **** **** 
+         **** **** **** **** **** **** **** **** **** **** 
+         */
+        
 
         public ViewPanel(ProjectionExplorerView pexview) {
-            this.pexview = pexview;
-
+            this.controller = null;
+            this.points = null;
+            
+            
+            this.pexview = pexview;            
             this.colorTable = new ColorTable();
             this.csp = new ColorScalePanel(ProjectionViewer.this);
             this.csp.setColorTable(this.colorTable);
@@ -902,7 +971,33 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
 
             this.setBackground(java.awt.Color.WHITE);
             this.addMouseMotionListener(new MouseMotionListener());
-            this.addMouseListener(new MouseClickedListener());
+            this.addMouseListener(new MouseClickedListener());            
+            this.addMouseWheelListener(new MouseAdapter() {
+                @Override
+                public void mouseWheelMoved(MouseWheelEvent e) {
+                    if( semaphore )
+                        return;                        
+
+                    int notches = e.getWheelRotation();                    
+                    if( controller != null && controller.representative() != null && controller.nearest() != null ) {
+                        int index = controller.indexRepresentative(e.getX(), e.getY());
+
+                        if( index != -1 ) {  
+                            ExplorerTreeNode node = controller.getNode(index);                            
+                            if( notches > 0 && node.parent() != null )
+                                agglomerateAnimation(index, node);
+                            else if( notches < 0 && !node.children().isEmpty() )
+                                expandAnimation(index, e);
+                            else if( notches < 0 && node.children().isEmpty() ) {
+                                semaphore = false;                                
+                                removeSubsetOverlap(controller.nearest().get(index), index);
+                                cleanImage();
+                                repaint();
+                            }                                
+                        } 
+                    }
+                }
+            });
             
 
             this.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -938,15 +1033,67 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                 } else {
                     g2Buffer.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
                 }
+                
+                if( controller == null ) {
 
-                graph.draw(getCurrentConnectivity(), g2Buffer);
+                    graph.draw(getCurrentConnectivity(), g2Buffer);
 
-                if (board) {
-                    g2Buffer.setColor(Color.GRAY);
-                    boardPolygons.stream().forEach((p) -> {
-                        g2Buffer.drawPolygon(p);
-                    });
+                    if (board) {
+                        g2Buffer.setColor(Color.GRAY);
+                        boardPolygons.stream().forEach((p) -> {
+                            g2Buffer.drawPolygon(p);
+                        });
+                    }
+                
+                } else { 
+                    if( selectedRepresentatives != null || controller.representative() != null ) {
+
+                        if( controller != null && controller.nearest() != null ) {
+                            
+                            graph.draw(controller, representativePolygon, movingIndexes, parentMoving, g2Buffer);
+
+                            
+                        } else {
+                            for( int i = 0; i < selectedRepresentatives.length; ++i ) {
+                                RectangleVis r = rectangles.get(selectedRepresentatives[i]);
+                                g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
+                                g2Buffer.setColor(Color.RED);
+                                g2Buffer.fillOval((int)r.getUX(), (int)r.getUY(), (int)r.getWidth(), (int)r.getHeight());
+                                g2Buffer.setColor(Color.BLACK);
+                                g2Buffer.drawOval((int)r.getUX(), (int)r.getUY(), (int)r.getWidth(), (int)r.getHeight());
+
+                                //if( hideShowNumbers ) {
+                                    g2Buffer.setColor(Color.BLACK);
+                                    g2Buffer.setFont(new Font("Helvetica", Font.PLAIN, 10));                    
+                                    g2Buffer.drawString(String.valueOf(r.numero), (int)r.getUX()+10, (int)r.getUY()+10);  
+                                //}
+                            }
+                        }
+
+                        if( !toDraw.isEmpty() ) {
+                            int j = movingIndexes.size()-1;
+                            for( int i = toDraw.size()-1; i >= (toDraw.size()-movingIndexes.size()); --i ) {
+                                Point2D.Double p = toDraw.get(i);
+                                g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
+                                int index = movingIndexes.get(j--);
+                                int size = controller.sizeRepresentative(controller.nearest().get(index).size());
+                                g2Buffer.setColor(Color.RED);
+                                g2Buffer.fillOval((int)p.x, (int)p.y, size, size);
+                                g2Buffer.setColor(Color.BLACK);
+                                g2Buffer.drawOval((int)p.x, (int)p.y, size, size);
+                            }
+                        }
+
+
+                        drawScale(g2Buffer);
+
+                        if( tooltip != null ) {
+                            tooltip.draw(g2Buffer);
+                        }
+                    
+                    }
                 }
+                
                 g2Buffer.dispose();
             }
 
@@ -999,7 +1146,7 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                         int width = metrics.stringWidth(this.toolTipLabel);
                         int height = metrics.getAscent();
 
-                  //Drawing a box to write de label
+                        //Drawing a box to write de label
                         //g.setColor(java.awt.Color.DARK_GRAY);
                         //g.fillRect(this.toolTipPosition.x-2, this.toolTipPosition.y-height, width+4, height+4);
                         g2.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.75f));
@@ -1340,109 +1487,217 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                 super.mouseMoved(evt);
 
                 if (graph != null) {
-                    Vertex vertex = null;
-                    Representative rep = null;
-                    ArrayList<Representative> autoRep = new ArrayList<>();
-                    
-                    if (ProjectionViewer.highlightTopic || evt.isControlDown()) {
-                        Topic topicByPosition = ViewPanel.this.getTopicByPosition(evt.getPoint());
-                        repByPosition = graph.getRepresentativeCluster(evt.getX(), evt.getY());
-                        
-                        if (ViewPanel.this.selectedTopic != null) {
-                            ViewPanel.this.selectedTopic.setShowThisTopic(false);
-                        }
+                    if( controller == null ) {
+                        Vertex vertex = null;
+                        Representative rep = null;
+                        ArrayList<Representative> autoRep = new ArrayList<>();
 
-                        
-                        if (topicByPosition != null) {
-                            ViewPanel.this.selectedTopic = topicByPosition;
-                            topicByPosition.setShowThisTopic(true);
-                        } else {
-                            ViewPanel.this.selectedTopic = null;
-                        }
-                        
-                        if( repByPosition != null ) 
-                            repByPosition.setShowThisRepresentative(true);
-                    } else if (evt.isShiftDown()) {
-                        Topic topicByPosition = ViewPanel.this.getTopicByPosition(evt.getPoint());
-                        
-                        if (topicByPosition != null) {
-                            if (ViewPanel.this.selectedTopic != topicByPosition) {
-                                ViewPanel.this.selectedTopic = topicByPosition;
-                                topicByPosition.setShowThisTopic(!topicByPosition.isShowThisTopic());
+                        if (ProjectionViewer.highlightTopic || evt.isControlDown()) {
+                            Topic topicByPosition = ViewPanel.this.getTopicByPosition(evt.getPoint());
+                            repByPosition = graph.getRepresentativeCluster(evt.getX(), evt.getY());
+
+                            if (ViewPanel.this.selectedTopic != null) {
+                                ViewPanel.this.selectedTopic.setShowThisTopic(false);
                             }
+
+
+                            if (topicByPosition != null) {
+                                ViewPanel.this.selectedTopic = topicByPosition;
+                                topicByPosition.setShowThisTopic(true);
+                            } else {
+                                ViewPanel.this.selectedTopic = null;
+                            }
+
+                            if( repByPosition != null ) 
+                                repByPosition.setShowThisRepresentative(true);
+                        } else if (evt.isShiftDown()) {
+                            Topic topicByPosition = ViewPanel.this.getTopicByPosition(evt.getPoint());
+
+                            if (topicByPosition != null) {
+                                if (ViewPanel.this.selectedTopic != topicByPosition) {
+                                    ViewPanel.this.selectedTopic = topicByPosition;
+                                    topicByPosition.setShowThisTopic(!topicByPosition.isShowThisTopic());
+                                }
+                            } else {
+                                ViewPanel.this.selectedTopic = null;
+                            }
+
                         } else {
                             ViewPanel.this.selectedTopic = null;
+                            vertex = graph.getVertexByPosition(evt.getX(), evt.getY());
+                            rep = graph.getRepresentativeByPosition(evt.getX(), evt.getY());
+                            autoRep = graph.getAutoRepresentativeByPosition(evt.getX(), evt.getY());                        
                         }
 
-                    } else {
-                        ViewPanel.this.selectedTopic = null;
-                        vertex = graph.getVertexByPosition(evt.getX(), evt.getY());
-                        rep = graph.getRepresentativeByPosition(evt.getX(), evt.getY());
-                        autoRep = graph.getAutoRepresentativeByPosition(evt.getX(), evt.getY());                        
-                    }
-                    
-                    if (vertex != null) {
-                        //Show the vertex label on the tool tip
-                        if (Vertex.isShowImage()) {
-                            try {
-                                Image im = graph.getImageCollection().getImage(vertex.getUrl());
-                                if (im != null) {
-                                    ViewPanel.this.toolTipImage = im.getScaledInstance(100, 100, 0);
-                                } else {
-                                    ViewPanel.this.toolTipImage = null;
+                        if (vertex != null) {
+                            //Show the vertex label on the tool tip
+                            if (Vertex.isShowImage()) {
+                                try {
+                                    Image im = graph.getImageCollection().getImage(vertex.getUrl());
+                                    if (im != null) {
+                                        ViewPanel.this.toolTipImage = im.getScaledInstance(100, 100, 0);
+                                    } else {
+                                        ViewPanel.this.toolTipImage = null;
+                                    }
+                                    ViewPanel.this.toolTipLabel = "";
+                                    ViewPanel.this.toolTipPosition = evt.getPoint();
+                                    ViewPanel.this.repaint();
+                                } catch (IOException ex) {
+                                    ex.printStackTrace();
                                 }
-                                ViewPanel.this.toolTipLabel = "";
+                            } else if (Vertex.isShowContent()) {
+                                //Show the vertex label on the tool tip
+                                try {
+                                    ViewPanel.this.toolTipLabel = graph.getCorpus().getFullContent(vertex.getUrl());
+                                } catch (IOException ex) {
+                                    Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
+                                }
+                                ViewPanel.this.toolTipImage = null;
+                            } else if (Vertex.isShowTitle()) {
+                                ViewPanel.this.toolTipLabel = vertex.toString();
+                                ViewPanel.this.toolTipImage = null;
+                            } else {
+                                ViewPanel.this.toolTipLabel = null;
+                                ViewPanel.this.toolTipImage = null;
+                            }
+                            if (ViewPanel.this.toolTipLabel != null && ViewPanel.this.toolTipLabel.trim().length() > 0) {
+                                if (ViewPanel.this.toolTipLabel.length() > 100) {
+                                    ViewPanel.this.toolTipLabel = ViewPanel.this.toolTipLabel.substring(0, 96) + "...";
+                                }
                                 ViewPanel.this.toolTipPosition = evt.getPoint();
                                 ViewPanel.this.repaint();
-                            } catch (IOException ex) {
-                                ex.printStackTrace();
                             }
-                        } else if (Vertex.isShowContent()) {
-                            //Show the vertex label on the tool tip
-                            try {
-                                ViewPanel.this.toolTipLabel = graph.getCorpus().getFullContent(vertex.getUrl());
-                            } catch (IOException ex) {
-                                Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, null, ex);
-                            }
-                            ViewPanel.this.toolTipImage = null;
-                        } else if (Vertex.isShowTitle()) {
-                            ViewPanel.this.toolTipLabel = vertex.toString();
-                            ViewPanel.this.toolTipImage = null;
+
+                            titleTextField.setText(ViewPanel.this.toolTipLabel);
+                            titleTextField.setCaretPosition(0);
                         } else {
+                            //Clear the tool tip
+                            titleTextField.setText("");
                             ViewPanel.this.toolTipLabel = null;
+                            ViewPanel.this.toolTipPosition = null;
                             ViewPanel.this.toolTipImage = null;
-                        }
-                        if (ViewPanel.this.toolTipLabel != null && ViewPanel.this.toolTipLabel.trim().length() > 0) {
-                            if (ViewPanel.this.toolTipLabel.length() > 100) {
-                                ViewPanel.this.toolTipLabel = ViewPanel.this.toolTipLabel.substring(0, 96) + "...";
-                            }
-                            ViewPanel.this.toolTipPosition = evt.getPoint();
                             ViewPanel.this.repaint();
                         }
 
-                        titleTextField.setText(ViewPanel.this.toolTipLabel);
-                        titleTextField.setCaretPosition(0);
-                    } else {
-                        //Clear the tool tip
-                        titleTextField.setText("");
-                        ViewPanel.this.toolTipLabel = null;
-                        ViewPanel.this.toolTipPosition = null;
-                        ViewPanel.this.toolTipImage = null;
-                        ViewPanel.this.repaint();
-                    }
+                        if (rep != null) {
+                            rep.setTransparent(true);
+                            updateImage();
+                        } else {
+                            updateImage();
+                        }
 
-                    if (rep != null) {
-                        rep.setTransparent(true);
-                        updateImage();
+                        if( !autoRep.isEmpty() ) {
+                            autoRep.forEach((r)->r.setTransparent(true));
+                            updateImage();
+                        } else 
+                            updateImage();
+                    
                     } else {
-                        updateImage();
+                        if( semaphore )
+                            return;
+
+                        if( controller.representative() != null && controller.nearest() != null ) {                        
+
+                            Polygon polygon = controller.clickedPolygon(evt.getX(), evt.getY());                        
+                            if( polygon != null ) {
+                                double dist = Double.MAX_VALUE;
+                                int indexDist = 0;
+
+                                for( int i = 0; i < controller.representative().length; ++i ) {
+
+                                    double d = br.com.methods.utils.Util.euclideanDistance(evt.getX(), evt.getY(), 
+                                            points[controller.representative()[i]].x, points[controller.representative()[i]].y);
+
+                                    if( d < dist ) {
+                                        dist = d;
+                                        indexDist = controller.representative()[i];
+                                    }
+                                }
+
+                                representativePolygon = indexDist;
+                            } else {
+                                representativePolygon = -1;
+                            }
+
+                            cleanImage();
+                            repaint();
+
+
+                            int index = controller.indexRepresentative(evt.getX(), evt.getY());
+                            if( index != -1 ) {
+
+                                if( tooltip != null )
+                                    return;
+
+                                ExplorerTreeNode node = controller.getNode(index);                            
+                                if( node.children().isEmpty() ) {  
+                                    semaphore = true;
+                                    List<OverlapRect> projection = removeOverlap(controller.nearest().get(index));
+                                    tooltip = new Tooltip(new Point2D.Double(evt.getX(), evt.getY()), projection);
+                                    timerTooltip = new Timer(0, new ActionListener() {
+                                        private float opacity = 0;
+
+                                        @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                            if( opacity > 1.0f )
+                                                opacity = 1.0f;
+                                            tooltip.setOpacity(opacity);
+                                            opacity += 0.1f;
+                                            if( opacity >= 1.0f ) {
+                                                cleanImage();
+                                                repaint();
+                                                timerTooltip.stop();
+                                                semaphore = false;
+                                            }
+                                            cleanImage();
+                                            repaint();
+                                        }                                    
+                                    });
+
+                                    timerTooltip.setDelay(5);
+                                    timerTooltip.setRepeats(true);
+                                    timerTooltip.start();
+                                } else if( tooltip != null ) {
+                                    tooltip = null;
+                                    cleanImage();
+                                    repaint();
+                                }
+
+                            } else if( tooltip != null ) {
+
+                                semaphore = true;
+                                timerTooltip = new Timer(0, new ActionListener() {
+                                    private float opacity = tooltip.getOpacity();
+
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        if( opacity < 0.0f )
+                                            opacity = 0.0f;
+                                        tooltip.setOpacity(opacity);
+                                        opacity -= 0.1f;
+                                        if( opacity <= 0.0f ) {
+                                            cleanImage();
+                                            repaint();
+                                            timerTooltip.stop();
+                                            semaphore = false;
+                                            tooltip = null;
+                                        }
+                                        cleanImage();
+                                        repaint();
+                                    }                                    
+                                });
+
+                                timerTooltip.setDelay(5);
+                                timerTooltip.setRepeats(true);
+                                timerTooltip.start();
+                            }
+
+                        }
                     }
                     
-                    if( !autoRep.isEmpty() ) {
-                        autoRep.forEach((r)->r.setTransparent(true));
-                        updateImage();
-                    } else 
-                        updateImage();
+                    
+                    
+                    
                 }
             }
 
@@ -1526,38 +1781,65 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
             @Override
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 super.mousePressed(evt);
+                
+                if( controller == null ) {
+                    if (evt.getButton() == java.awt.event.MouseEvent.BUTTON1) {
+                        if (graph != null) {
 
-                if (evt.getButton() == java.awt.event.MouseEvent.BUTTON1) {
-                    if (graph != null) {
-                        
-                        if (ProjectionViewer.movePoints) {
-                            ViewPanel.this.selectedVertex = graph.getVertexByPosition(evt.getX(), evt.getY());
+                            if (ProjectionViewer.movePoints) {
+                                ViewPanel.this.selectedVertex = graph.getVertexByPosition(evt.getX(), evt.getY());
 
-                            if (ViewPanel.this.selectedVertex != null) {
-                                ViewPanel.this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                                if (ViewPanel.this.selectedVertex != null) {
+                                    ViewPanel.this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                                }
                             }
-                        }
 
+                            Scalar s = (Scalar) scalarCombo.getSelectedItem();
+                            ViewPanel.this.source = evt.getPoint();
+                            ViewPanel.this.color = VertexSelectionFactory.getInstance(ProjectionViewer.this,
+                                    ProjectionViewer.type, s).getColor();
+                        }
+                    } else if (evt.getButton() == java.awt.event.MouseEvent.BUTTON3) {
                         Scalar s = (Scalar) scalarCombo.getSelectedItem();
-                        ViewPanel.this.source = evt.getPoint();
+                        ViewPanel.this.polygon = new java.awt.Polygon();
+                        ViewPanel.this.polygon.addPoint(evt.getX(), evt.getY());
                         ViewPanel.this.color = VertexSelectionFactory.getInstance(ProjectionViewer.this,
                                 ProjectionViewer.type, s).getColor();
                     }
-                } else if (evt.getButton() == java.awt.event.MouseEvent.BUTTON3) {
-                    Scalar s = (Scalar) scalarCombo.getSelectedItem();
-                    ViewPanel.this.polygon = new java.awt.Polygon();
-                    ViewPanel.this.polygon.addPoint(evt.getX(), evt.getY());
-                    ViewPanel.this.color = VertexSelectionFactory.getInstance(ProjectionViewer.this,
-                            ProjectionViewer.type, s).getColor();
-                }
+
+                    if( repByPosition != null ) {
+                        repByPosition.setShowThisRepresentative(true);
+                        repByPosition.setTransparent(true);
+                        updateImage();
+                    }
+                    if( evt.isAltDown() )
+                        graph.tellRepresentatives(evt.getX(), evt.getY());
                 
-                if( repByPosition != null ) {
-                    repByPosition.setShowThisRepresentative(true);
-                    repByPosition.setTransparent(true);
-                    updateImage();
+                } else {
+                    
+                    if( semaphore )
+                        return;
+                    if(  controller.representative() != null && controller.nearest() != null ) {
+                        int index = controller.indexRepresentative(evt.getX(), evt.getY());
+
+                        lastClicked = new Point2D.Double(evt.getX(), evt.getY());
+                        if( index != -1 ) {        
+
+                            ExplorerTreeNode node = controller.getNode(index);                            
+                            if( evt.isControlDown() && node.parent() != null )
+                                agglomerateAnimation(index, node);                                      
+                            else if( !node.children().isEmpty() )
+                                expandAnimation(index, evt);
+                            else if( node.children().isEmpty() ) {    
+                                semaphore = false;
+                                removeSubsetOverlap(controller.nearest().get(index), index);
+                                cleanImage();
+                                repaint();
+                            }
+
+                        } 
+                    }   
                 }
-                if( evt.isAltDown() )
-                    graph.tellRepresentatives(evt.getX(), evt.getY());
             }
 
             @Override
@@ -1606,7 +1888,347 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                 ViewPanel.this.target = null;
                 ViewPanel.this.repaint();
             }
-        }      //Used to select points with the polygon
+        }      
+
+        private void agglomerateAnimation(int index, ExplorerTreeNode node) {
+
+            semaphore = true;
+            movingIndexes = controller.agglomerateNode(index);
+            parentMoving = node.parent().routing();
+            timer = new Timer(0, new ActionListener() {
+                private double i = 0;
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                        for( int j = 0; j < movingIndexes.size(); ++j) {
+                            int v = movingIndexes.get(j);
+                            double x = (1.0-i)*controller.projection()[v].x +
+                                    i*controller.projection()[parentMoving].x;
+                            double y = (1.0-i)*controller.projection()[v].y +
+                                    i*controller.projection()[parentMoving].y;
+
+                            toDraw.add(new Point2D.Double(x, y));
+
+                            i += 0.01;
+                            if( i >= 1.0 ) {
+                                parentMoving = -1;
+                                movingIndexes.clear();
+                                toDraw.clear();
+                                cleanImage();
+                                repaint();
+                                timer.stop();
+                                semaphore = false;
+                            }
+                        }
+
+                        cleanImage();
+                        repaint();
+                }
+            });
+
+            timer.setDelay(10);
+            timer.setRepeats(true);
+            timer.start();
+        }
+
+        private void expandAnimation(int index, MouseEvent e) {
+            semaphore = true;
+            movingIndexes = controller.expandNode(index, e.getX(), e.getY(), getSize().width, getSize().height);
+            timer = new Timer(0, new ActionListener() {
+                private double i = 0;
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                        for( int j = 0; j < movingIndexes.size(); ++j) {
+                            int v = movingIndexes.get(j);
+                            double x = (1.0-i)*controller.projection()[index].x + i*controller.projection()[v].x;
+                            double y = (1.0-i)*controller.projection()[index].y + i*controller.projection()[v].y;
+
+                            toDraw.add(new Point2D.Double(x, y));
+
+                            i += 0.01;
+                            if( i >= 1.0 ) {
+                                movingIndexes.clear();
+                                toDraw.clear();
+                                cleanImage();
+                                repaint();
+                                timer.stop();
+                                semaphore = false;
+                            }
+                        }
+
+                        cleanImage();
+                        repaint();
+
+
+
+                }
+            });
+
+            timer.setDelay(10);
+            timer.setRepeats(true);
+            timer.start();
+        }
+        
+        
+        private void drawScale(Graphics2D g2Buffer) {
+            g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));            
+
+            int width = 255;
+            int height = 30;
+            int x = 10;
+            int y = 10;            
+            int spaceDescription = 15;
+
+            for( int i = 0; i < width; ++i ) {
+                float value = (float)i/(float)width;
+                int r = (int) ((255 * (value*100))/100);
+                int g = 0;
+                int b = (int) ((255 * (100 - value*100)))/100;
+
+                g2Buffer.setColor(new Color(r, g, b));
+                g2Buffer.drawLine(x+i, y, x+i, y+height);
+            }
+
+            g2Buffer.setColor(Color.BLACK);
+            g2Buffer.drawRect(x, y, width, height);
+
+            g2Buffer.drawString("min", x, y + height + spaceDescription);
+            g2Buffer.drawString("max", x + width - g2Buffer.getFontMetrics().stringWidth("max"), y + height + spaceDescription);
+        }
+
+        
+        private List<OverlapRect> removeOverlap(List<Integer> indexes) {
+            int algo = 1;//Integer.parseInt(JOptionPane.showInputDialog("Deseja utilizar uma estrutura de matriz esparsa?\n0-Não\n1-Sim"));
+            boolean applySeamCarving = false;//Integer.parseInt(JOptionPane.showInputDialog("Apply SeamCarving?")) == 1;
+            List<OverlapRect> rects = br.com.methods.utils.Util.toRectangle(rectangles, indexes);
+
+            double[] center0 = br.com.methods.utils.Util.getCenter(rects);
+          //  PRISM prism = new PRISM(algo);
+            RWordleC rwordlec = new RWordleC();
+
+          //  Map<OverlapRect, OverlapRect> projected = prism.applyAndShowTime(rects);
+            Map<OverlapRect, OverlapRect> projected = rwordlec.applyAndShowTime(rects);
+            List<OverlapRect> projectedValues = br.com.methods.utils.Util.getProjectedValues(projected);
+            double[] center1 = br.com.methods.utils.Util.getCenter(projectedValues);
+            double ammountX = center0[0]-center1[0];
+            double ammountY = center0[1]-center1[1];
+            br.com.methods.utils.Util.translate(projectedValues, ammountX, ammountY);        
+            br.com.methods.utils.Util.normalize(projectedValues);
+
+            if( applySeamCarving )
+                projectedValues = OverlapView.addSeamCarvingResult(projectedValues);
+
+            return projectedValues;
+        }
+
+        private void removeSubsetOverlap(List<Integer> indexes, int representative) {
+            int algo = 1;//Integer.parseInt(JOptionPane.showInputDialog("Deseja utilizar uma estrutura de matriz esparsa?\n0-Não\n1-Sim"));
+            boolean applySeamCarving = false;//Integer.parseInt(JOptionPane.showInputDialog("Apply SeamCarving?")) == 1;
+            List<OverlapRect> rects = br.com.methods.utils.Util.toRectangle(rectangles, indexes);
+
+            System.out.println("-------------------");
+            for( int i = 0; i < rects.size(); ++i ) {
+                System.out.println(rects.get(i).x+", "+rects.get(i).y);
+            }
+            System.out.println("-------------------");
+
+
+            double maxDistance = -1;
+            for( int i = 0; i < indexes.size(); ++i ) {
+                RectangleVis p1 = rectangles.get(representative);
+                RectangleVis p2 = rectangles.get(indexes.get(i));
+
+                double d = br.com.methods.utils.Util.euclideanDistance(p1.x, p1.y, p2.x, p2.y);            
+                if( d > maxDistance )
+                    maxDistance = d;
+
+            }
+            double[] center0 = br.com.methods.utils.Util.getCenter(rects);
+            PRISM prism = new PRISM(algo);
+            Map<OverlapRect, OverlapRect> projected = prism.applyAndShowTime(rects);
+            List<OverlapRect> projectedValues = br.com.methods.utils.Util.getProjectedValues(projected);
+            double[] center1 = br.com.methods.utils.Util.getCenter(projectedValues);
+
+            double ammountX = center0[0]-center1[0];
+            double ammountY = center0[1]-center1[1];
+            br.com.methods.utils.Util.translate(projectedValues, ammountX, ammountY);        
+            br.com.methods.utils.Util.normalize(projectedValues);
+
+            if( applySeamCarving )
+                projectedValues = OverlapView.addSeamCarvingResult(projectedValues);
+
+            ArrayList<RectangleVis> cluster = new ArrayList<>();
+            br.com.methods.utils.Util.toRectangleVis(cluster, projectedValues, indexes);
+    //        
+
+            int rep = -1;
+            List<OverlapRect> toforce = new ArrayList<>();
+            ArrayList<OverlapRect> overlaps = new ArrayList<>();
+            List<Map.Entry<OverlapRect, OverlapRect>> entryset = projected.entrySet().stream().collect(Collectors.toList());
+            for( int i = 0; i < entryset.size(); ++i ) {
+                double d = br.com.methods.utils.Util.euclideanDistance(entryset.get(i).getKey().x, entryset.get(i).getKey().y, 
+                        rectangles.get(representative).getUX(), rectangles.get(representative).getUY());
+                System.out.println(">> distance: "+d);
+                if( d == 0 ) {
+                    rep = i;
+                    System.out.println("INDEX REPRESENTATIVE: "+i+" ID: "+entryset.get(i).getValue().getId());
+
+                }
+                overlaps.add(entryset.get(i).getKey());
+                toforce.add(entryset.get(i).getValue());
+            }
+
+            JFrame frame = new JFrame();
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            OverlapView panel = new OverlapView(projected, cluster, afterSeamCarving);
+
+            JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
+            slider.setPaintTicks(true);
+            slider.setPaintLabels(true);
+
+            slider.addChangeListener(panel);
+
+
+            frame.add(panel, BorderLayout.CENTER);
+            frame.add(slider, BorderLayout.SOUTH);
+            panel.setLocation((int)lastClicked.x, (int)lastClicked.y);
+    //        
+            panel.cleanImage();
+            panel.repaint();
+            panel.adjustPanel();  
+            frame.setSize(panel.getSize().width, panel.getSize().height+100);
+            frame.setLocationRelativeTo(this);
+            frame.setVisible(true);
+    //        
+
+
+            List<OverlapRect> after = new ForceLayout().repulsive(toforce, rep, 1, 5);
+
+            ArrayList<RectangleVis> rectanglesforce = new ArrayList<>();
+            for( OverlapRect o: after ) {
+                RectangleVis rec = new RectangleVis(o.getUX(), o.getUY(), o.width, o.height, Color.BLUE, o.getId());
+                rectanglesforce.add(rec);
+            }
+            JFrame frame2 = new JFrame();
+            frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            OverlapView panel2 = new OverlapView(projected, rectanglesforce, afterSeamCarving);
+
+            JSlider slider2= new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
+            slider2.setPaintTicks(true);
+            slider2.setPaintLabels(true);
+
+            slider2.addChangeListener(panel2);
+
+
+            frame2.add(panel2, BorderLayout.CENTER);
+            frame2.add(slider2, BorderLayout.SOUTH);
+            panel2.setLocation((int)lastClicked.x, (int)lastClicked.y);
+
+    //        panel2.cleanImage();
+    //        panel2.repaint();
+    //        panel2.adjustPanel();  
+    //        frame2.setSize(panel2.getSize().width, panel2.getSize().height+100);
+    //        frame2.setLocationRelativeTo(this);
+    //        frame2.setVisible(true);
+
+
+            /**
+             * Testing NMap representation
+             */
+
+            List<Element> data = new ArrayList<>();
+
+            List<OverlapRect> proj1 = projected.entrySet().stream().map((v)->v.getKey()).collect(Collectors.toList());
+            List<OverlapRect> proj2 = projected.entrySet().stream().map((v)->v.getValue()).collect(Collectors.toList());
+            Random rand = new Random();
+
+            for( int i = 0; i < proj2.size(); ++i ) {
+
+
+                double distance =  br.com.methods.utils.Util.euclideanDistance(rectangles.get(representative).x, rectangles.get(representative).y, 
+                                                          proj1.get(i).x, proj1.get(i).y);
+
+                double weight = ExplorerTreeController.calculateWeight(10, 0.2*10, maxDistance, distance);
+                data.add(new Element(proj2.get(i).getId(), (float)proj2.get(i).x, (float)proj2.get(i).y, (float) weight, 1));
+
+                System.out.println("id: "+proj2.get(i).getId()+" x: "+proj2.get(i).x+" -- y: "+proj2.get(i).y);
+
+            }
+            int visualSpaceWidth = 800;
+            int visualSpaceHeight = 600;
+
+            NMap nmap = new NMap(visualSpaceWidth, visualSpaceHeight);
+
+            // We can use this when weights are different        
+            List<BoundingBox> ac = nmap.alternateCut(data);
+    //        Frame frameAlternateCut = new Frame(visualSpaceWidth, visualSpaceHeight, ac, "NMap Alternate Cut");
+    //        frameAlternateCut.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    //        frameAlternateCut.setVisible(true);
+    ////        
+    ////        List<BoundingBox> ew = nmap.equalWeight(data);
+    ////        Frame frameEqualWeight = new Frame(visualSpaceWidth, visualSpaceHeight, ew, "NMAP Equal Weight");
+    ////        frameEqualWeight.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    ////        frameEqualWeight.setVisible(true);       
+    ////        
+    //        List<OverlapRect> proj = projected.entrySet().stream().map((v)->v.getKey()).collect(Collectors.toList());
+    //        
+    //        List<Element> data2 = new ArrayList<>();
+    //        for( int i = 0; i < proj.size(); ++i )
+    //            data2.add(new Element(proj.get(i).getId(), (float)proj.get(i).x, (float)proj.get(i).y, 1.0f, 1.0f));
+    //        
+    //        List<BoundingBox> ew2 = nmap.equalWeight(data2);
+    //        Frame frameEqualWeight2 = new Frame(visualSpaceWidth, visualSpaceHeight, ew2, "NMAP Equal Weight 2");
+    //        frameEqualWeight2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    //        frameEqualWeight2.setVisible(true);
+    //        
+    //        
+            List<OverlapRect> after2 = OverlapView.removeOverlap(overlaps, rep);//new ForceNMAP(800, 600).repulsive(toforce, rep, 0.2*10, 10);
+    //        List<OverlapRect> after2 = new ArrayList<>();
+    //        for( BoundingBox bb: ac ) {
+    //            Element e = bb.getElement();
+    //            System.out.println("id: "+e.getId()+" x: "+e.x+" -- y: "+e.y);
+    //            after2.add(new OverlapRect(e.x, e.y, RECTSIZE, RECTSIZE, e.getId()));
+    //        }
+
+
+
+
+
+            ArrayList<RectangleVis> rectanglesforce2 = new ArrayList<>();
+            for( OverlapRect o: after2 ) {
+                RectangleVis rec = new RectangleVis(o.getUX(), o.getUY(), o.width, o.height, Color.BLUE, o.getId());
+                rectanglesforce2.add(rec);
+            }
+            JFrame frame3 = new JFrame();
+            frame3.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            OverlapView panel3 = new OverlapView(projected, rectanglesforce2, afterSeamCarving);
+
+            JSlider slider3 = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
+            slider3.setPaintTicks(true);
+            slider3.setPaintLabels(true);
+
+            slider3.addChangeListener(panel3);
+
+
+            frame3.add(panel3, BorderLayout.CENTER);
+            frame3.add(slider3, BorderLayout.SOUTH);
+            panel3.setLocation((int)lastClicked.x, (int)lastClicked.y);
+
+            panel3.cleanImage();
+            panel3.repaint();
+            panel3.adjustPanel();  
+            frame3.setSize(panel3.getSize().width, panel3.getSize().height+100);
+            frame3.setLocationRelativeTo(this);
+            frame3.setVisible(true);
+        }
+        
+        
+
+
+        //Used to select points with the polygon
         private java.awt.Polygon polygon;
         //Used to select points with the retangle
         private java.awt.Point source = null;
