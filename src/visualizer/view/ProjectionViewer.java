@@ -917,8 +917,15 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
         }
     }
     
+    public void setController(ExplorerTreeController controller) {
+        view.controller = controller;        
+    }
+    
+    public void setPoints(Point2D.Double[] points) {
+        view.points = points;
+    }
+    
     public class ViewPanel extends JPanel {
-        
         
         /**
          ** 
@@ -935,7 +942,6 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
         private Point2D.Double lastClicked = null;
 
         private ExplorerTreeController controller;
-
         private Point2D.Double[] points;
 
         private List<Integer> movingIndexes = new ArrayList<>();
@@ -990,7 +996,7 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                                 expandAnimation(index, e);
                             else if( notches < 0 && node.children().isEmpty() ) {
                                 semaphore = false;                                
-                                removeSubsetOverlap(controller.nearest().get(index), index);
+                                //removeSubsetOverlap(controller.nearest().get(index), index);
                                 cleanImage();
                                 repaint();
                             }                                
@@ -1048,26 +1054,14 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                 } else { 
                     if( selectedRepresentatives != null || controller.representative() != null ) {
 
-                        if( controller != null && controller.nearest() != null ) {
+                        if( controller.nearest() != null ) {
                             
                             graph.draw(controller, representativePolygon, movingIndexes, parentMoving, g2Buffer);
 
+                        } else {                            
                             
-                        } else {
-                            for( int i = 0; i < selectedRepresentatives.length; ++i ) {
-                                RectangleVis r = rectangles.get(selectedRepresentatives[i]);
-                                g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 1.0f));
-                                g2Buffer.setColor(Color.RED);
-                                g2Buffer.fillOval((int)r.getUX(), (int)r.getUY(), (int)r.getWidth(), (int)r.getHeight());
-                                g2Buffer.setColor(Color.BLACK);
-                                g2Buffer.drawOval((int)r.getUX(), (int)r.getUY(), (int)r.getWidth(), (int)r.getHeight());
-
-                                //if( hideShowNumbers ) {
-                                    g2Buffer.setColor(Color.BLACK);
-                                    g2Buffer.setFont(new Font("Helvetica", Font.PLAIN, 10));                    
-                                    g2Buffer.drawString(String.valueOf(r.numero), (int)r.getUX()+10, (int)r.getUY()+10);  
-                                //}
-                            }
+                            graph.draw(selectedRepresentatives, g2Buffer);
+                            
                         }
 
                         if( !toDraw.isEmpty() ) {
@@ -1633,7 +1627,19 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                                 if( node.children().isEmpty() ) {  
                                     semaphore = true;
                                     List<OverlapRect> projection = removeOverlap(controller.nearest().get(index));
+                                    
+                                    List<Integer> indexElements = controller.nearest().get(index);
+                                    ///List<OverlapRect> projection = new ArrayList<>();
+                                    List<Color> projectionColors = new ArrayList<>();
+                                    for( int i = 0; i < indexElements.size(); ++i ) {
+                                        Vertex v = graph.getVertex().get(indexElements.get(i));
+//                                        OverlapRect rect = new OverlapRect(v.getX(), v.getY(), v.getRay()*2, v.getRay()*2, (int) v.getId());
+//                                        projection.add(rect);
+                                        projectionColors.add(v.getColor());
+                                    }
+                                    
                                     tooltip = new Tooltip(new Point2D.Double(evt.getX(), evt.getY()), projection);
+                                    tooltip.setColors(projectionColors);
                                     timerTooltip = new Timer(0, new ActionListener() {
                                         private float opacity = 0;
 
@@ -1832,7 +1838,7 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
                                 expandAnimation(index, evt);
                             else if( node.children().isEmpty() ) {    
                                 semaphore = false;
-                                removeSubsetOverlap(controller.nearest().get(index), index);
+                                //removeSubsetOverlap(controller.nearest().get(index), index);
                                 cleanImage();
                                 repaint();
                             }
@@ -2003,8 +2009,16 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
         private List<OverlapRect> removeOverlap(List<Integer> indexes) {
             int algo = 1;//Integer.parseInt(JOptionPane.showInputDialog("Deseja utilizar uma estrutura de matriz esparsa?\n0-Não\n1-Sim"));
             boolean applySeamCarving = false;//Integer.parseInt(JOptionPane.showInputDialog("Apply SeamCarving?")) == 1;
-            List<OverlapRect> rects = br.com.methods.utils.Util.toRectangle(rectangles, indexes);
-
+            
+            //List<OverlapRect> rects = br.com.methods.utils.Util.toRectangle(rectangles, indexes);
+            
+            List<OverlapRect> rects = new ArrayList<>();
+            indexes.stream().forEach((e)-> {
+                Vertex vertex = graph.getVertex().get(e);
+                rects.add(new OverlapRect(vertex.getX(), vertex.getY(), vertex.getRay()*2, vertex.getRay()*2, e));
+            });
+            
+            
             double[] center0 = br.com.methods.utils.Util.getCenter(rects);
           //  PRISM prism = new PRISM(algo);
             RWordleC rwordlec = new RWordleC();
@@ -2023,207 +2037,207 @@ private void splitScalarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-
 
             return projectedValues;
         }
-
-        private void removeSubsetOverlap(List<Integer> indexes, int representative) {
-            int algo = 1;//Integer.parseInt(JOptionPane.showInputDialog("Deseja utilizar uma estrutura de matriz esparsa?\n0-Não\n1-Sim"));
-            boolean applySeamCarving = false;//Integer.parseInt(JOptionPane.showInputDialog("Apply SeamCarving?")) == 1;
-            List<OverlapRect> rects = br.com.methods.utils.Util.toRectangle(rectangles, indexes);
-
-            System.out.println("-------------------");
-            for( int i = 0; i < rects.size(); ++i ) {
-                System.out.println(rects.get(i).x+", "+rects.get(i).y);
-            }
-            System.out.println("-------------------");
-
-
-            double maxDistance = -1;
-            for( int i = 0; i < indexes.size(); ++i ) {
-                RectangleVis p1 = rectangles.get(representative);
-                RectangleVis p2 = rectangles.get(indexes.get(i));
-
-                double d = br.com.methods.utils.Util.euclideanDistance(p1.x, p1.y, p2.x, p2.y);            
-                if( d > maxDistance )
-                    maxDistance = d;
-
-            }
-            double[] center0 = br.com.methods.utils.Util.getCenter(rects);
-            PRISM prism = new PRISM(algo);
-            Map<OverlapRect, OverlapRect> projected = prism.applyAndShowTime(rects);
-            List<OverlapRect> projectedValues = br.com.methods.utils.Util.getProjectedValues(projected);
-            double[] center1 = br.com.methods.utils.Util.getCenter(projectedValues);
-
-            double ammountX = center0[0]-center1[0];
-            double ammountY = center0[1]-center1[1];
-            br.com.methods.utils.Util.translate(projectedValues, ammountX, ammountY);        
-            br.com.methods.utils.Util.normalize(projectedValues);
-
-            if( applySeamCarving )
-                projectedValues = OverlapView.addSeamCarvingResult(projectedValues);
-
-            ArrayList<RectangleVis> cluster = new ArrayList<>();
-            br.com.methods.utils.Util.toRectangleVis(cluster, projectedValues, indexes);
-    //        
-
-            int rep = -1;
-            List<OverlapRect> toforce = new ArrayList<>();
-            ArrayList<OverlapRect> overlaps = new ArrayList<>();
-            List<Map.Entry<OverlapRect, OverlapRect>> entryset = projected.entrySet().stream().collect(Collectors.toList());
-            for( int i = 0; i < entryset.size(); ++i ) {
-                double d = br.com.methods.utils.Util.euclideanDistance(entryset.get(i).getKey().x, entryset.get(i).getKey().y, 
-                        rectangles.get(representative).getUX(), rectangles.get(representative).getUY());
-                System.out.println(">> distance: "+d);
-                if( d == 0 ) {
-                    rep = i;
-                    System.out.println("INDEX REPRESENTATIVE: "+i+" ID: "+entryset.get(i).getValue().getId());
-
-                }
-                overlaps.add(entryset.get(i).getKey());
-                toforce.add(entryset.get(i).getValue());
-            }
-
-            JFrame frame = new JFrame();
-            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            OverlapView panel = new OverlapView(projected, cluster, afterSeamCarving);
-
-            JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
-            slider.setPaintTicks(true);
-            slider.setPaintLabels(true);
-
-            slider.addChangeListener(panel);
-
-
-            frame.add(panel, BorderLayout.CENTER);
-            frame.add(slider, BorderLayout.SOUTH);
-            panel.setLocation((int)lastClicked.x, (int)lastClicked.y);
-    //        
-            panel.cleanImage();
-            panel.repaint();
-            panel.adjustPanel();  
-            frame.setSize(panel.getSize().width, panel.getSize().height+100);
-            frame.setLocationRelativeTo(this);
-            frame.setVisible(true);
-    //        
-
-
-            List<OverlapRect> after = new ForceLayout().repulsive(toforce, rep, 1, 5);
-
-            ArrayList<RectangleVis> rectanglesforce = new ArrayList<>();
-            for( OverlapRect o: after ) {
-                RectangleVis rec = new RectangleVis(o.getUX(), o.getUY(), o.width, o.height, Color.BLUE, o.getId());
-                rectanglesforce.add(rec);
-            }
-            JFrame frame2 = new JFrame();
-            frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            OverlapView panel2 = new OverlapView(projected, rectanglesforce, afterSeamCarving);
-
-            JSlider slider2= new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
-            slider2.setPaintTicks(true);
-            slider2.setPaintLabels(true);
-
-            slider2.addChangeListener(panel2);
-
-
-            frame2.add(panel2, BorderLayout.CENTER);
-            frame2.add(slider2, BorderLayout.SOUTH);
-            panel2.setLocation((int)lastClicked.x, (int)lastClicked.y);
-
-    //        panel2.cleanImage();
-    //        panel2.repaint();
-    //        panel2.adjustPanel();  
-    //        frame2.setSize(panel2.getSize().width, panel2.getSize().height+100);
-    //        frame2.setLocationRelativeTo(this);
-    //        frame2.setVisible(true);
-
-
-            /**
-             * Testing NMap representation
-             */
-
-            List<Element> data = new ArrayList<>();
-
-            List<OverlapRect> proj1 = projected.entrySet().stream().map((v)->v.getKey()).collect(Collectors.toList());
-            List<OverlapRect> proj2 = projected.entrySet().stream().map((v)->v.getValue()).collect(Collectors.toList());
-            Random rand = new Random();
-
-            for( int i = 0; i < proj2.size(); ++i ) {
-
-
-                double distance =  br.com.methods.utils.Util.euclideanDistance(rectangles.get(representative).x, rectangles.get(representative).y, 
-                                                          proj1.get(i).x, proj1.get(i).y);
-
-                double weight = ExplorerTreeController.calculateWeight(10, 0.2*10, maxDistance, distance);
-                data.add(new Element(proj2.get(i).getId(), (float)proj2.get(i).x, (float)proj2.get(i).y, (float) weight, 1));
-
-                System.out.println("id: "+proj2.get(i).getId()+" x: "+proj2.get(i).x+" -- y: "+proj2.get(i).y);
-
-            }
-            int visualSpaceWidth = 800;
-            int visualSpaceHeight = 600;
-
-            NMap nmap = new NMap(visualSpaceWidth, visualSpaceHeight);
-
-            // We can use this when weights are different        
-            List<BoundingBox> ac = nmap.alternateCut(data);
-    //        Frame frameAlternateCut = new Frame(visualSpaceWidth, visualSpaceHeight, ac, "NMap Alternate Cut");
-    //        frameAlternateCut.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    //        frameAlternateCut.setVisible(true);
-    ////        
-    ////        List<BoundingBox> ew = nmap.equalWeight(data);
-    ////        Frame frameEqualWeight = new Frame(visualSpaceWidth, visualSpaceHeight, ew, "NMAP Equal Weight");
-    ////        frameEqualWeight.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    ////        frameEqualWeight.setVisible(true);       
-    ////        
-    //        List<OverlapRect> proj = projected.entrySet().stream().map((v)->v.getKey()).collect(Collectors.toList());
-    //        
-    //        List<Element> data2 = new ArrayList<>();
-    //        for( int i = 0; i < proj.size(); ++i )
-    //            data2.add(new Element(proj.get(i).getId(), (float)proj.get(i).x, (float)proj.get(i).y, 1.0f, 1.0f));
-    //        
-    //        List<BoundingBox> ew2 = nmap.equalWeight(data2);
-    //        Frame frameEqualWeight2 = new Frame(visualSpaceWidth, visualSpaceHeight, ew2, "NMAP Equal Weight 2");
-    //        frameEqualWeight2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    //        frameEqualWeight2.setVisible(true);
-    //        
-    //        
-            List<OverlapRect> after2 = OverlapView.removeOverlap(overlaps, rep);//new ForceNMAP(800, 600).repulsive(toforce, rep, 0.2*10, 10);
-    //        List<OverlapRect> after2 = new ArrayList<>();
-    //        for( BoundingBox bb: ac ) {
-    //            Element e = bb.getElement();
-    //            System.out.println("id: "+e.getId()+" x: "+e.x+" -- y: "+e.y);
-    //            after2.add(new OverlapRect(e.x, e.y, RECTSIZE, RECTSIZE, e.getId()));
-    //        }
-
-
-
-
-
-            ArrayList<RectangleVis> rectanglesforce2 = new ArrayList<>();
-            for( OverlapRect o: after2 ) {
-                RectangleVis rec = new RectangleVis(o.getUX(), o.getUY(), o.width, o.height, Color.BLUE, o.getId());
-                rectanglesforce2.add(rec);
-            }
-            JFrame frame3 = new JFrame();
-            frame3.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            OverlapView panel3 = new OverlapView(projected, rectanglesforce2, afterSeamCarving);
-
-            JSlider slider3 = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
-            slider3.setPaintTicks(true);
-            slider3.setPaintLabels(true);
-
-            slider3.addChangeListener(panel3);
-
-
-            frame3.add(panel3, BorderLayout.CENTER);
-            frame3.add(slider3, BorderLayout.SOUTH);
-            panel3.setLocation((int)lastClicked.x, (int)lastClicked.y);
-
-            panel3.cleanImage();
-            panel3.repaint();
-            panel3.adjustPanel();  
-            frame3.setSize(panel3.getSize().width, panel3.getSize().height+100);
-            frame3.setLocationRelativeTo(this);
-            frame3.setVisible(true);
-        }
+//
+//        private void removeSubsetOverlap(List<Integer> indexes, int representative) {
+//            int algo = 1;//Integer.parseInt(JOptionPane.showInputDialog("Deseja utilizar uma estrutura de matriz esparsa?\n0-Não\n1-Sim"));
+//            boolean applySeamCarving = false;//Integer.parseInt(JOptionPane.showInputDialog("Apply SeamCarving?")) == 1;
+//            List<OverlapRect> rects = br.com.methods.utils.Util.toRectangle(rectangles, indexes);
+//
+//            System.out.println("-------------------");
+//            for( int i = 0; i < rects.size(); ++i ) {
+//                System.out.println(rects.get(i).x+", "+rects.get(i).y);
+//            }
+//            System.out.println("-------------------");
+//
+//
+//            double maxDistance = -1;
+//            for( int i = 0; i < indexes.size(); ++i ) {
+//                RectangleVis p1 = rectangles.get(representative);
+//                RectangleVis p2 = rectangles.get(indexes.get(i));
+//
+//                double d = br.com.methods.utils.Util.euclideanDistance(p1.x, p1.y, p2.x, p2.y);            
+//                if( d > maxDistance )
+//                    maxDistance = d;
+//
+//            }
+//            double[] center0 = br.com.methods.utils.Util.getCenter(rects);
+//            PRISM prism = new PRISM(algo);
+//            Map<OverlapRect, OverlapRect> projected = prism.applyAndShowTime(rects);
+//            List<OverlapRect> projectedValues = br.com.methods.utils.Util.getProjectedValues(projected);
+//            double[] center1 = br.com.methods.utils.Util.getCenter(projectedValues);
+//
+//            double ammountX = center0[0]-center1[0];
+//            double ammountY = center0[1]-center1[1];
+//            br.com.methods.utils.Util.translate(projectedValues, ammountX, ammountY);        
+//            br.com.methods.utils.Util.normalize(projectedValues);
+//
+//            if( applySeamCarving )
+//                projectedValues = OverlapView.addSeamCarvingResult(projectedValues);
+//
+//            ArrayList<RectangleVis> cluster = new ArrayList<>();
+//            br.com.methods.utils.Util.toRectangleVis(cluster, projectedValues, indexes);
+//    //        
+//
+//            int rep = -1;
+//            List<OverlapRect> toforce = new ArrayList<>();
+//            ArrayList<OverlapRect> overlaps = new ArrayList<>();
+//            List<Map.Entry<OverlapRect, OverlapRect>> entryset = projected.entrySet().stream().collect(Collectors.toList());
+//            for( int i = 0; i < entryset.size(); ++i ) {
+//                double d = br.com.methods.utils.Util.euclideanDistance(entryset.get(i).getKey().x, entryset.get(i).getKey().y, 
+//                        rectangles.get(representative).getUX(), rectangles.get(representative).getUY());
+//                System.out.println(">> distance: "+d);
+//                if( d == 0 ) {
+//                    rep = i;
+//                    System.out.println("INDEX REPRESENTATIVE: "+i+" ID: "+entryset.get(i).getValue().getId());
+//
+//                }
+//                overlaps.add(entryset.get(i).getKey());
+//                toforce.add(entryset.get(i).getValue());
+//            }
+//
+//            JFrame frame = new JFrame();
+//            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//            OverlapView panel = new OverlapView(projected, cluster, afterSeamCarving);
+//
+//            JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
+//            slider.setPaintTicks(true);
+//            slider.setPaintLabels(true);
+//
+//            slider.addChangeListener(panel);
+//
+//
+//            frame.add(panel, BorderLayout.CENTER);
+//            frame.add(slider, BorderLayout.SOUTH);
+//            panel.setLocation((int)lastClicked.x, (int)lastClicked.y);
+//    //        
+//            panel.cleanImage();
+//            panel.repaint();
+//            panel.adjustPanel();  
+//            frame.setSize(panel.getSize().width, panel.getSize().height+100);
+//            frame.setLocationRelativeTo(this);
+//            frame.setVisible(true);
+//    //        
+//
+//
+//            List<OverlapRect> after = new ForceLayout().repulsive(toforce, rep, 1, 5);
+//
+//            ArrayList<RectangleVis> rectanglesforce = new ArrayList<>();
+//            for( OverlapRect o: after ) {
+//                RectangleVis rec = new RectangleVis(o.getUX(), o.getUY(), o.width, o.height, Color.BLUE, o.getId());
+//                rectanglesforce.add(rec);
+//            }
+//            JFrame frame2 = new JFrame();
+//            frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//            OverlapView panel2 = new OverlapView(projected, rectanglesforce, afterSeamCarving);
+//
+//            JSlider slider2= new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
+//            slider2.setPaintTicks(true);
+//            slider2.setPaintLabels(true);
+//
+//            slider2.addChangeListener(panel2);
+//
+//
+//            frame2.add(panel2, BorderLayout.CENTER);
+//            frame2.add(slider2, BorderLayout.SOUTH);
+//            panel2.setLocation((int)lastClicked.x, (int)lastClicked.y);
+//
+//    //        panel2.cleanImage();
+//    //        panel2.repaint();
+//    //        panel2.adjustPanel();  
+//    //        frame2.setSize(panel2.getSize().width, panel2.getSize().height+100);
+//    //        frame2.setLocationRelativeTo(this);
+//    //        frame2.setVisible(true);
+//
+//
+//            /**
+//             * Testing NMap representation
+//             */
+//
+//            List<Element> data = new ArrayList<>();
+//
+//            List<OverlapRect> proj1 = projected.entrySet().stream().map((v)->v.getKey()).collect(Collectors.toList());
+//            List<OverlapRect> proj2 = projected.entrySet().stream().map((v)->v.getValue()).collect(Collectors.toList());
+//            Random rand = new Random();
+//
+//            for( int i = 0; i < proj2.size(); ++i ) {
+//
+//
+//                double distance =  br.com.methods.utils.Util.euclideanDistance(rectangles.get(representative).x, rectangles.get(representative).y, 
+//                                                          proj1.get(i).x, proj1.get(i).y);
+//
+//                double weight = ExplorerTreeController.calculateWeight(10, 0.2*10, maxDistance, distance);
+//                data.add(new Element(proj2.get(i).getId(), (float)proj2.get(i).x, (float)proj2.get(i).y, (float) weight, 1));
+//
+//                System.out.println("id: "+proj2.get(i).getId()+" x: "+proj2.get(i).x+" -- y: "+proj2.get(i).y);
+//
+//            }
+//            int visualSpaceWidth = 800;
+//            int visualSpaceHeight = 600;
+//
+//            NMap nmap = new NMap(visualSpaceWidth, visualSpaceHeight);
+//
+//            // We can use this when weights are different        
+//            List<BoundingBox> ac = nmap.alternateCut(data);
+//    //        Frame frameAlternateCut = new Frame(visualSpaceWidth, visualSpaceHeight, ac, "NMap Alternate Cut");
+//    //        frameAlternateCut.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//    //        frameAlternateCut.setVisible(true);
+//    ////        
+//    ////        List<BoundingBox> ew = nmap.equalWeight(data);
+//    ////        Frame frameEqualWeight = new Frame(visualSpaceWidth, visualSpaceHeight, ew, "NMAP Equal Weight");
+//    ////        frameEqualWeight.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//    ////        frameEqualWeight.setVisible(true);       
+//    ////        
+//    //        List<OverlapRect> proj = projected.entrySet().stream().map((v)->v.getKey()).collect(Collectors.toList());
+//    //        
+//    //        List<Element> data2 = new ArrayList<>();
+//    //        for( int i = 0; i < proj.size(); ++i )
+//    //            data2.add(new Element(proj.get(i).getId(), (float)proj.get(i).x, (float)proj.get(i).y, 1.0f, 1.0f));
+//    //        
+//    //        List<BoundingBox> ew2 = nmap.equalWeight(data2);
+//    //        Frame frameEqualWeight2 = new Frame(visualSpaceWidth, visualSpaceHeight, ew2, "NMAP Equal Weight 2");
+//    //        frameEqualWeight2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//    //        frameEqualWeight2.setVisible(true);
+//    //        
+//    //        
+//            List<OverlapRect> after2 = OverlapView.removeOverlap(overlaps, rep);//new ForceNMAP(800, 600).repulsive(toforce, rep, 0.2*10, 10);
+//    //        List<OverlapRect> after2 = new ArrayList<>();
+//    //        for( BoundingBox bb: ac ) {
+//    //            Element e = bb.getElement();
+//    //            System.out.println("id: "+e.getId()+" x: "+e.x+" -- y: "+e.y);
+//    //            after2.add(new OverlapRect(e.x, e.y, RECTSIZE, RECTSIZE, e.getId()));
+//    //        }
+//
+//
+//
+//
+//
+//            ArrayList<RectangleVis> rectanglesforce2 = new ArrayList<>();
+//            for( OverlapRect o: after2 ) {
+//                RectangleVis rec = new RectangleVis(o.getUX(), o.getUY(), o.width, o.height, Color.BLUE, o.getId());
+//                rectanglesforce2.add(rec);
+//            }
+//            JFrame frame3 = new JFrame();
+//            frame3.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//            OverlapView panel3 = new OverlapView(projected, rectanglesforce2, afterSeamCarving);
+//
+//            JSlider slider3 = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);        
+//            slider3.setPaintTicks(true);
+//            slider3.setPaintLabels(true);
+//
+//            slider3.addChangeListener(panel3);
+//
+//
+//            frame3.add(panel3, BorderLayout.CENTER);
+//            frame3.add(slider3, BorderLayout.SOUTH);
+//            panel3.setLocation((int)lastClicked.x, (int)lastClicked.y);
+//
+//            panel3.cleanImage();
+//            panel3.repaint();
+//            panel3.adjustPanel();  
+//            frame3.setSize(panel3.getSize().width, panel3.getSize().height+100);
+//            frame3.setLocationRelativeTo(this);
+//            frame3.setVisible(true);
+//        }
         
         
 

@@ -47,10 +47,15 @@ address = {Washington, DC, USA},
  * ***** END LICENSE BLOCK ***** */
 package visualizer.view;
 
+import br.com.explorer.explorertree.ExplorerTreeController;
 import br.com.methods.utils.OverlapRect;
 import br.com.overlayanalisys.euclideandistance.EuclideanDistance;
 import br.com.overlayanalisys.layoutsimilarity.LayoutSimilarity;
 import br.com.overlayanalisys.sizeincrease.SizeIncrease;
+import br.com.representative.RepresentativeFinder;
+import br.com.representative.RepresentativeRegistry;
+import br.com.representative.dictionaryrepresentation.DS3;
+import static br.com.test.ui.ProjectionView.RECTSIZE;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -109,12 +114,8 @@ import visualizer.graph.coodination.IdentityMappingView;
 import visualizer.graph.coodination.Mapping;
 import visualizer.graph.coodination.TopicMappingView;
 import visualizer.graph.listeners.VertexSelectionFactory;
-import visualizer.matrix.DenseVector;
 import visualizer.matrix.Matrix;
 import visualizer.matrix.MatrixFactory;
-import visualizer.projection.distance.Dissimilarity;
-import visualizer.projection.distance.DissimilarityFactory;
-import visualizer.projection.distance.DissimilarityType;
 import visualizer.projection.representative.Analysis;
 import visualizer.topic.RulesTopicGrid;
 import visualizer.topic.Topic;
@@ -320,6 +321,7 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         exporttitles = new javax.swing.JMenuItem();
         movements_jMenu = new javax.swing.JMenu();
         movePoints_jMenuItem = new javax.swing.JMenuItem();
+        explorerTreeJMenuItem = new javax.swing.JMenuItem();
         separatorOptions2 = new javax.swing.JSeparator();
         FeatureSelection = new javax.swing.JMenuItem();
         NeuralNetworkClassifier = new javax.swing.JMenuItem();
@@ -1259,6 +1261,14 @@ public class ProjectionExplorerView extends javax.swing.JFrame {
         movements_jMenu.add(movePoints_jMenuItem);
 
         menuTool.add(movements_jMenu);
+
+        explorerTreeJMenuItem.setText("Explorer Tree");
+        explorerTreeJMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                explorerTreeJMenuItemActionPerformed(evt);
+            }
+        });
+        menuTool.add(explorerTreeJMenuItem);
         menuTool.add(separatorOptions2);
 
         FeatureSelection.setMnemonic('O');
@@ -2751,6 +2761,40 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
         
     }//GEN-LAST:event_savePointsActionPerformed
 
+    private void explorerTreeJMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_explorerTreeJMenuItemActionPerformed
+        
+        Viewer gv = (Viewer) this.desktop.getSelectedFrame();
+        if( gv != null ) {
+            
+            ProjectionViewer pv = (ProjectionViewer) gv;
+            List<Vertex> vertices = pv.getGraph().getVertex();
+            Point2D.Double[] points = new Point2D.Double[vertices.size()];
+            Point2D.Double[] pointsCenter = new Point2D.Double[vertices.size()];
+            int ray = vertices.get(0).getRay();
+            for( int i = 0; i < points.length; ++i ) {                    
+                points[i] = new Point2D.Double(vertices.get(i).getX(), vertices.get(i).getY());
+                pointsCenter[i] = new Point2D.Double(vertices.get(i).getX()+ray, vertices.get(i).getY()+ray);
+            }
+
+            double[][] distances = new double[points.length][points.length];
+            for( int i = 0; i < distances.length; ++i )
+                for( int j = 0; j < distances.length; ++j )
+                    distances[i][j] = Math.sqrt(Math.pow(points[i].x-points[j].x, 2) + Math.pow(points[i].y-points[j].y, 2));
+
+            RepresentativeFinder ds3 = (RepresentativeFinder) RepresentativeRegistry.getInstance(DS3.class, distances, 0.02, 0, 0);
+            ExplorerTreeController controller = new ExplorerTreeController(points, pointsCenter, ds3, 4, ray*2, ray);
+
+            controller.build();                
+            controller.updateDiagram(pv.getSize().width, pv.getSize().height, 0, null);
+
+            pv.setController(controller);      
+            pv.setPoints(points);
+            pv.updateImage();
+                
+        }
+        
+    }//GEN-LAST:event_explorerTreeJMenuItemActionPerformed
+
     void updateButtons() {
         Viewer gv = (Viewer) this.desktop.getSelectedFrame();
         if (gv != null && gv.getGraph().isCorpus()) {
@@ -2951,6 +2995,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
     private javax.swing.JMenuItem editClean;
     private javax.swing.JMenuItem editDelete;
     private javax.swing.JMenuItem euclideanDistanceMenuItem;
+    private javax.swing.JMenuItem explorerTreeJMenuItem;
     private javax.swing.JMenuItem exportConnectivity;
     private javax.swing.JMenuItem exportCorporaOptions;
     private javax.swing.JMenu exportMenu;

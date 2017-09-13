@@ -877,28 +877,46 @@ public class Graph implements java.io.Serializable {
         
         int[] representative = controller.representative();
         Map<Integer, List<Integer>> map = controller.nearest();
-        Point2D.Double[] projectionCenter = controller.projectionCenter();
-        Point2D.Double[] projection = controller.projection();
 
         for( int i = 0; i < representative.length; ++i ) {
 
             Vertex v =  getVertex().get(representative[i]);
 
-            Polygon poly = controller.polygon(representative[i]);//getPolygon((int)r.x, (int)r.y);
+            Polygon poly = controller.polygon(representative[i]);
             if( poly != null ) {
                 g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.3f));
-                g2Buffer.setColor(Color.RED); 
+                
 
                 g2Buffer.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.3f));
-                if( representative[i] == representativePolygon ) {
-                    Stroke before = g2Buffer.getStroke();
+                 Stroke before = g2Buffer.getStroke();
+                    
+                if( representative[i] == representativePolygon ) {                    
                     g2Buffer.setStroke(new BasicStroke(5));
-                    g2Buffer.setColor(Color.BLUE);
+                    g2Buffer.setColor(Color.GRAY);
                     g2Buffer.draw(poly);                                    
                     g2Buffer.setStroke(before);
                 } else {
+                    
+                    
+                    
+                    int r = 0, g = 0, b = 0;
+                    List<Integer> nearest = map.get(representative[i]);
+                    for( Integer e: nearest ) {
+                        r += getVertex().get(e).getColor().getRed();
+                        g += getVertex().get(e).getColor().getGreen();
+                        b += getVertex().get(e).getColor().getBlue();
+                    }
+                    r /= nearest.size();
+                    g /= nearest.size();
+                    b /= nearest.size();
+                    
+                    
+                    g2Buffer.setColor(new Color(r, g, b)); 
+                    g2Buffer.setStroke(new BasicStroke(2));
                     g2Buffer.draw(poly);
                 }
+                
+                g2Buffer.setStroke(before);
 
             }
 
@@ -917,20 +935,26 @@ public class Graph implements java.io.Serializable {
             int blue = (int) ((255 * (100 - normalizedSizeCluster*100)))/100;
             Color clusterColor = new Color(red, green, blue);
             
-            int size = getVertex().get(0).getRay()*2;
+            int size = v.getRay()*2;
             int sizeScale = size*2;                            
             
             
             // draw the scale
             g2Buffer.setColor(clusterColor);
-            g2Buffer.fillOval((int)(v.getX()-size/2.0), (int)(v.getY()-size/2.0), sizeScale, sizeScale);                            
+            g2Buffer.fillOval((int)(v.getX()-size), (int)(v.getY()-size), sizeScale, sizeScale);                            
             g2Buffer.setColor(Color.BLACK);
-            g2Buffer.drawOval((int)(v.getX()-size/2.0), (int)(v.getY()-size/2.0), sizeScale, sizeScale);
+            g2Buffer.drawOval((int)(v.getX()-size), (int)(v.getY()-size), sizeScale, sizeScale);
             
-            // draw the representive itself
-            
+            // draw the representive itself            
             v.draw(g2Buffer, false);
 
+        }
+    }
+
+    public void draw(int[] representative, Graphics2D g2Buffer) {
+        for( int i = 0; i < representative.length; ++i ) {
+            Vertex v = vertex.get(i);            
+            v.draw(g2Buffer, false);
         }
     }
         
