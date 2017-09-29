@@ -2771,6 +2771,7 @@ private void matrixFileConverter_jMenuItemActionPerformed(java.awt.event.ActionE
             Point2D.Double[] points = new Point2D.Double[vertices.size()];
             Point2D.Double[] pointsCenter = new Point2D.Double[vertices.size()];
             int ray = vertices.get(0).getRay();
+            System.out.println("ray: "+ray);
             for( int i = 0; i < points.length; ++i ) {                    
                 points[i] = new Point2D.Double(vertices.get(i).getX(), vertices.get(i).getY());
                 pointsCenter[i] = new Point2D.Double(vertices.get(i).getX()+ray, vertices.get(i).getY()+ray);
