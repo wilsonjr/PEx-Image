@@ -8,7 +8,6 @@ package visualizer.view;
 
 import br.com.methods.overlap.OverlapRegistry;
 import br.com.methods.overlap.OverlapRemoval;
-import br.com.methods.overlap.expadingnode.OverlapTree;
 import br.com.methods.overlap.hexboard.HexBoardExecutor;
 import br.com.methods.overlap.incboard.IncBoardExecutor;
 import br.com.methods.overlap.incboard.PointItem;
@@ -19,18 +18,13 @@ import br.com.methods.overlap.rwordle.RWordleL;
 import br.com.methods.overlap.vpsc.VPSC;
 import br.com.methods.utils.OverlapRect;
 import br.com.methods.utils.Util;
-import br.com.representative.RepresentativeFinder;
-import br.com.representative.clustering.FarPointsMedoidApproach;
-import br.com.representative.clustering.partitioning.Dbscan;
-import br.com.representative.clustering.partitioning.KMeans;
 import java.awt.Polygon;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Scanner;
@@ -616,8 +610,8 @@ public class RemoveOverlapView extends javax.swing.JFrame {
 
     private void iniciarJButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_iniciarJButtonActionPerformed
         Map<OverlapRect, OverlapRect> reprojected = null;
-        ArrayList<OverlapRect> projectedValues = null;
-        ArrayList<OverlapRect> rects = formRectangles();
+        List<OverlapRect> projectedValues = null;
+        List<OverlapRect> rects = formRectangles();
         
         if( rWordleCJRadioButton.isSelected() ) {
             
